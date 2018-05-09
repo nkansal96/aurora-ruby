@@ -7,7 +7,7 @@ class InterpretTest < Test::Unit::TestCase
 
     def test_get_intepret
         text = 'what is the weather in los angeles?'
-        interpret = Aurora::get_interpret(text)
+        interpret = Aurora::Api.get_interpret(text)
 
         assert_equal('what is the weather in los angeles', interpret.text)
         assert_equal('weather', interpret.intent)

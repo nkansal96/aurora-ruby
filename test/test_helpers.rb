@@ -3,7 +3,7 @@ module TestHelpers
     APP_TOKEN = 'O31MY3tPoEMHGcjGEQqnNY1HanDrkkAu'
 
     def setup
-        Aurora::config = Aurora::Config.new(APP_ID, APP_TOKEN)
+        Aurora.config = Aurora::Config.new(APP_ID, APP_TOKEN)
     end
 
     def teardown

@@ -1,7 +1,4 @@
 module Aurora
-
-    # Config variable for credentials — must be initialized to use module functions
-    # e.g. Aurora::config = Aurora::Config.new(APP_ID, APP_TOKEN, DEVICE_ID)
     class Config
         attr_accessor :app_id, :app_token, :device_id
 
@@ -11,5 +8,9 @@ module Aurora
             @app_token = app_token
             @device_id = device_id
         end
+    end
+
+    def self.config_valid?
+        Aurora.config != nil && Aurora.config.is_a?(Config)
     end
 end

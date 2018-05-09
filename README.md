@@ -7,7 +7,6 @@ The SDK is currently in a pre-alpha release phase. Bugs and limited functionalit
 ## Installation
 **The Recommended Ruby version is 2.5.0+**
 
-
 ## Testing
 The full test suite can be run using `rake`.
 
