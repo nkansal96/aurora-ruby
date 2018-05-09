@@ -1,5 +1,3 @@
-require_relative 'api'
-
 module Aurora
     class Text
         attr_accessor :text
