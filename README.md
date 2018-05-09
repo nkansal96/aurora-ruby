@@ -6,3 +6,9 @@ The SDK is currently in a pre-alpha release phase. Bugs and limited functionalit
 
 ## Installation
 **The Recommended Ruby version is 2.5.0+**
+
+## Testing
+The full test suite can be run using `rake`.
+
+
+To specify an individual test file, use the `TEST` option for rake. Example: `rake TEST=./test/aurora/interpet_test.rb`
