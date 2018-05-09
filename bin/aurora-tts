@@ -1,0 +1,35 @@
+#!/usr/bin/env ruby
+
+require 'aurora-sdk'
+
+if ARGV.length == 4
+    text      = ARGV[0]
+    filename  = ARGV[1].dup
+    app_id    = ARGV[2]
+    app_token = ARGV[3]
+
+    if !filename.downcase.end_with? '.wav'
+        filename << '.wav'
+    end
+
+    begin
+        Aurora.config = Aurora::Config.new(app_id, app_token)
+        res = Aurora::Api.get_tts(text)
+    rescue StandardError => e
+        puts e.message
+        exit
+    end
+
+    begin
+        open(filename, 'wb') do |file|
+            file.write(res)
+        end
+    rescue
+        puts "Error writing file \'#{filename}\'"
+        exit
+    end
+
+    puts "File \'#{filename}\' successfully saved."
+else
+    puts 'USAGE: /path/to/script/aurora-tts [text] [filename] [app_id] [app_token]'
+end
