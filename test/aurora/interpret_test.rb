@@ -5,7 +5,7 @@ require_relative '../test_helpers'
 class InterpretTest < Test::Unit::TestCase
     include TestHelpers
 
-    def test_get_intepret
+    def test_get_interpret
         text = 'what is the weather in los angeles?'
         interpret = Aurora::Api.get_interpret(text)
 
