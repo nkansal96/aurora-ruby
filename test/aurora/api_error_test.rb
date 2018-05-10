@@ -5,6 +5,10 @@ require_relative '../test_helpers'
 class ApiErrorTest < Test::Unit::TestCase
     include TestHelpers
 
+    def test_normal_config
+        assert(Aurora.config_valid?)
+    end
+
     def test_nil_config
         Aurora.config = nil
         assert_raise( Aurora::InvalidConfigError ) { Aurora::Api.get_interpret('what is the weather in los angeles?') }

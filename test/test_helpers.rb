@@ -7,6 +7,6 @@ module TestHelpers
     end
 
     def teardown
-        Aurora::config = nil
+        Aurora.config = nil
     end
 end
