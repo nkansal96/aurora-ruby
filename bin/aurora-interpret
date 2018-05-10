@@ -1,0 +1,29 @@
+#!/usr/bin/env ruby
+
+require 'aurora-sdk'
+
+if ARGV.length == 3
+    text      = ARGV[0]
+    app_id    = ARGV[1]
+    app_token = ARGV[2]
+
+    begin
+        Aurora.config = Aurora::Config.new(app_id, app_token)
+        res = Aurora::Api.get_interpret(text)
+    rescue StandardError => e
+        puts e.message
+        exit
+    end
+
+    puts 'Intent:'
+    puts res.intent
+
+    puts
+
+    puts 'Entities:'
+    res.entities.each do |entity,value|
+        puts "#{entity}: #{value}"
+    end
+else
+    puts 'USAGE: /path/to/script/aurora-interpret [text] [app_id] [app_token]'
+end
