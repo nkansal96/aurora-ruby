@@ -4,6 +4,11 @@ Aurora is the enterprise end-to-end speech solution. This Ruby SDK will allow yo
 
 The SDK is currently in a pre-alpha release phase. Bugs and limited functionality should be expected.
 
+## Prerequisites
+- Ruby (2.5.0+)
+- Swig
+- PortAudio
+
 ## Installation
 **The Recommended Ruby version is 2.5.0+**
 
@@ -19,6 +24,13 @@ Or, if you prefer to build and install manually:
 $ gem build aurora-sdk.gemspec
 $ sudo gem install aurora-sdk-x.x.x.gem
 ```
+
+To build and install PortAudio bindings for Ruby:
+```
+$ rake build_pa
+```
+
+Simple running `rake install` will build and install the bindings, as well.
 
 ## Testing
 The full test suite can be run using `rake`. To specify an individual test file, use the `TEST` option for rake:

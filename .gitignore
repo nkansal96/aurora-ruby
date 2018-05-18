@@ -1,5 +1,9 @@
 *.gem
 *.rbc
+*.bundle
+*.o
+*_wrap.c
+/ext/Makefile
 /.config
 /coverage/
 /InstalledFiles
