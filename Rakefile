@@ -12,14 +12,41 @@ task :clean do
     end
 end
 
+desc 'Delete ext build files'
+task :clean_pa do
+    save = ['ext/portaudio.i', 'ext/extconf.rb', 'bin/portaudio.bundle']
+    Dir['ext/*', 'lib/*.bundle'].each do |f|
+        unless save.include? f
+            File.delete f
+        end
+    end
+end
+
 desc 'Build gem file.'
 task :build do
     sh 'gem build aurora-sdk.gemspec'
 end
 
+desc 'Build portaudio bindings.'
+task :build_pa do
+    Rake::Task["clean_pa"].invoke
+    Dir.chdir("ext/") do
+        sh 'swig -ruby portaudio.i'
+        ruby 'extconf.rb'
+        sh 'make'
+    end
+    if File.exist? 'ext/portaudio.bundle'
+        cp 'ext/portaudio.bundle', 'lib/'
+    end
+    if File.exist? 'ext/portaudio.so'
+        cp 'ext/portaudio.so', 'lib/'
+    end
+end
+
 desc 'Install gem.'
 task :install do
     Rake::Task["build"].invoke
+    Rake::Task["build_pa"].invoke
     gem_files = Dir['aurora-sdk-*.*.*.gem']
 
     if gem_files.length == 1
