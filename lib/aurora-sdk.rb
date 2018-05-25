@@ -1,6 +1,7 @@
 require 'net/http'
 require 'json'
 require_relative 'aurora-sdk/api'
+require_relative 'aurora-sdk/audio'
 require_relative 'aurora-sdk/config'
 require_relative 'aurora-sdk/interpret'
 require_relative 'aurora-sdk/text'
