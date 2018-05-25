@@ -12,16 +12,34 @@ module Aurora
         STT_URL = BASE_URL + '/v1/stt/'
         INTERPRET_URL = BASE_URL + '/v1/interpret/'
 
-        HTTP_ERRORS = [
-            EOFError,
-            Errno::ECONNRESET,
-            Errno::EINVAL,
-            Net::HTTPClientError,
-            Net::HTTPBadResponse,
-            Net::HTTPHeaderSyntaxError,
-            Net::ProtocolError,
-            Timeout::Error
-        ]
+        def self.get_stt(audio, stream = false)
+            if !Aurora.config_valid?
+                raise InvalidConfigError
+            else
+                if stream
+                    # TODO: implement audio stream for continuous functions
+                    return
+                else
+                    if !audio.is_a?(AudioFile)
+                        raise AudioTypeError.new(audio.class)
+                    end
+                    data = audio.to_wav
+                end
+
+                uri = URI(STT_URL)
+                request = create_request(uri, 'POST')
+                request.body = data
+                response = Net::HTTP.start(uri.hostname, uri.port, use_ssl: true) {|http|
+                    http.request(request)
+                }
+
+                handle_error(response)
+
+                # Return Text object
+                json = JSON.parse(response.body)
+                Text.new(json['transcript'])
+            end
+        end
 
         def self.get_tts(text)
             if !Aurora.config_valid?
@@ -34,19 +52,11 @@ module Aurora
                     http.request(request)
                 }
 
-                case response
-                when Net::HTTPSuccess then
-                    # TODO: convert to a Speech object
-                    response.body
-                when *HTTP_ERRORS then
-                    if response.body != nil
-                        json = JSON.parse(response.body)
-                        msg = "#{json['code']}: #{json['message']}"
-                        raise APIError.new(msg)
-                    end
-                else
-                    raise APIError
-                end
+                handle_error(response)
+
+                # Return Speech object
+                audio_file = AudioFile.new(response.body)
+                Speech.new(audio_file)
             end
         end
 
@@ -61,28 +71,45 @@ module Aurora
                     http.request(request)
                 }
 
-                case response
-                when Net::HTTPSuccess then
-                    json = JSON.parse(response.body)
-                    Interpret.new(json['text'], json['intent'], json['entities'])
-                when *HTTP_ERRORS then
-                    if response.body != nil
-                        json = JSON.parse(response.body)
-                        msg = "#{json['code']}: #{json['message']}"
-                        raise APIError.new(msg)
-                    end
-                else
-                    raise APIError
-                end
+                handle_error(response)
+
+                # Return Interpret object
+                json = JSON.parse(response.body)
+                Interpret.new(json['text'], json['intent'], json['entities'])
             end
         end
 
-        private_class_method def self.create_request(uri)
-            req = Net::HTTP::Get.new(uri)
+        private_class_method def self.create_request(uri, type='GET')
+            case type
+            when 'GET' then
+                req = Net::HTTP::Get.new(uri)
+            when 'POST' then
+                req = Net::HTTP::Post.new(uri)
+            end
+
             req['X-Application-ID'] = Aurora.config.app_id
             req['X-Application-Token'] = Aurora.config.app_token
             req['X-Device-ID'] = Aurora.config.device_id
             return req
+        end
+
+        private_class_method def self.handle_error(response)
+            case response
+            when Net::HTTPSuccess then
+                return true
+            else
+                if response.body != nil
+                    json = JSON.parse(response.body)
+                    code = json['code']
+                    msg = json['message']
+                    if code != nil
+                        raise APIError.new("#{json['code']}: #{json['message']}")
+                    else
+                        raise APIError.new("#{json['message']}")
+                    end
+                end
+                raise APIError
+            end
         end
     end
 end
