@@ -23,7 +23,7 @@ module Aurora
 
         def play
             @playing = true
-            Audio.play_audio(@audio)
+            Audio.play_wav(@audio)
             @playing = false
         end
     end
@@ -61,29 +61,15 @@ module Aurora
         DATA_OFFSET         = 44
 
         SAMPLE_RATE         = 16000
-        FRAMES_PER_BUFFER   = 2
+        FRAMES_PER_BUFFER   = 1
         NUM_CHANNELS        = 1 # mono
         SAMPLE_TYPE         = PA::PaInt16
         SAMPLE_SIZE         = 2 # bytes
 
-        def self.parse_wav_file(filename)
-            file_info = []
-            File.open(filename) do |file|
-                FIELD_INFO.each do |info|
-                    buffer = file.read(info[1].size)
-                    file_info << buffer.unpack(info[1].type)
-                end
-
-                # Add remainder of file as data
-                file_info << file.read.to_s
-            end
-            WavFile.new(*file_info)
-        end
-
         def self.create_wav_file(data, filename)
             # File.open(filename, 'wb') do |file|
             #     file.write('RIFF')
-            #     file.write(36 + data.size / 4))
+            #     file.write(36 + data.size / 4)
             #     file.write(data)
             # end
         end
@@ -112,55 +98,32 @@ module Aurora
             create_wav_file(data, 'record.wav')
         end
 
+        def self.play_wav(data)
+            play_audio(parse_wav_data(data))
+        end
+
+        def self.play_file(filename)
+            play_audio(parse_wav_file(filename))
+        end
+
         # Plays audio given WAV file data
-        def self.play_audio(wav)
+        private_class_method def self.play_audio(wav)
             if !valid_wav?(wav)
                 raise WAVFileError
             end
 
-            sample_rate = wav.sample_rate
-            sample_size = wav.bits_per_sample / 8
-            frames_per_buffer = wav.byte_rate / sample_rate
-
             stream = Fiddle::Pointer.new 0
 
             handle_error(PA.Pa_Initialize)
-            handle_error(PA.Pa_OpenStream(stream.ref, nil, get_output_params, SAMPLE_RATE, FRAMES_PER_BUFFER, PA::PaClipOff, nil, nil))
+            handle_error(PA.Pa_OpenStream(stream.ref, nil, get_output_params(wav), wav.sample_rate, FRAMES_PER_BUFFER, PA::PaClipOff, nil, nil))
             handle_error(PA.Pa_StartStream(stream))
 
-
             # Play audio data by iterating through chunks
-            (0..data.size-1).step(SAMPLE_SIZE).each do |i|
-                buffer = data[i..(i+SAMPLE_SIZE-1)]
+            wav.data.each do |buffer|
                 handle_error(PA.Pa_WriteStream(stream, buffer, FRAMES_PER_BUFFER))
             end
 
             terminate(stream)
-        end
-
-        def self.play_file(filename)
-            file = parse_wav_file(filename)
-            play_audio(file)
-            # stream = Fiddle::Pointer.new 0
-            #
-            # handle_error(PA.Pa_Initialize)
-            # handle_error(PA.Pa_OpenStream(stream.ref, nil, get_output_params, SAMPLE_RATE, FRAMES_PER_BUFFER, PA::PaClipOff, nil, nil))
-            # handle_error(PA.Pa_StartStream(stream))
-            #
-            # # Read audio file in chunks and play
-            # File.open(filename) do |file|
-            #     if !valid_wav?(file)
-            #         raise WAVFileError
-            #     end
-            #
-            #     # Play back audio by writing to stream
-            #     file.seek DATA_OFFSET
-            #     while (buffer = file.read(SAMPLE_SIZE)) do
-            #         handle_error(PA.Pa_WriteStream(stream, buffer, FRAMES_PER_BUFFER))
-            #     end
-            # end
-            #
-            # terminate(stream)
         end
 
         private_class_method def self.terminate(stream)
@@ -194,7 +157,7 @@ module Aurora
             return input_param
         end
 
-        private_class_method def self.get_output_params
+        private_class_method def self.get_output_params(wav)
             output_param = PA::PaStreamParameters.malloc
 
             # Initialize output parameters
@@ -211,7 +174,7 @@ module Aurora
             end
             output_info = PA::PaDeviceInfo.new(output_info)
 
-            output_param.channelCount = NUM_CHANNELS
+            output_param.channelCount = wav.num_channels
             output_param.sampleFormat = SAMPLE_TYPE
             output_param.suggestedLatency = output_info.defaultHighOutputLatency
             output_param.hostApiSpecificStreamInfo = nil
@@ -226,8 +189,50 @@ module Aurora
             end
         end
 
+        private_class_method def self.parse_wav_data(data)
+            file_info = []
+            sample_data = []
+
+            FIELD_INFO.each do |info|
+                buffer = data[(info[1].offset)..(info[1].offset + info[1].size - 1)]
+                file_info << buffer.unpack(info[1].type).first
+            end
+
+            sample_size = file_info[10] / 8 # convert bits to bytes
+
+            # Add remainder of wav as sample data
+            (DATA_OFFSET..(data.size-1)).step(sample_size).each do |i|
+                sample_data << data[i..(i+sample_size - 1)]
+            end
+
+            file_info << sample_data
+            WavFile.new(*file_info)
+        end
+
+        private_class_method def self.parse_wav_file(filename)
+            file_info = []
+            sample_data = []
+
+            File.open(filename) do |file|
+                FIELD_INFO.each do |info|
+                    buffer = file.read(info[1].size)
+                    file_info << buffer.unpack(info[1].type).first
+                end
+
+                sample_size = file_info[10] / 8 # convert bits to bytes
+
+                # Add remainder of file as data
+                while (buffer = file.read(sample_size)) do
+                    sample_data << buffer
+                end
+            end
+
+            file_info << sample_data
+            WavFile.new(*file_info)
+        end
+
         # TODO: Validates file headers with expected values for WAV format
-        private_class_method def self.valid_wav?(file)
+        private_class_method def self.valid_wav?(wav)
             return true
         end
     end
