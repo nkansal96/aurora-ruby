@@ -109,7 +109,7 @@ module Aurora
             end
         end
 
-        # Records for specified number of seconds and returns WAV formatted audio
+        # Records for specified number of seconds and returns AudioFile
         def self.record(seconds)
             stream = Fiddle::Pointer.new 0
             num_bytes = FRAMES_PER_BUFFER * NUM_CHANNELS * SAMPLE_SIZE
@@ -128,7 +128,7 @@ module Aurora
             end
 
             terminate(stream)
-            create_wav(data)
+            AudioFile.new(create_wav(data))
         end
 
         def self.play_wav(data)

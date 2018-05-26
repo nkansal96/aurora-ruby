@@ -19,15 +19,18 @@ module Aurora
     LISTEN_LEN = 0
     SILENCE_LEN = 1.0
 
-    def listen(length = LISTEN_LEN, silence_len = SILENCE_LEN)
+    def self.listen(length = LISTEN_LEN, silence_len = SILENCE_LEN)
+        if length != 0
+            Speech.new(Audio.record(length))
+        end
     end
 
-    def continuously_listen(length = LISTEN_LEN, silence_len = SILENCE_LEN)
+    def self.ntinuously_listen(length = LISTEN_LEN, silence_len = SILENCE_LEN)
     end
 
-    def listen_and_transcribe(length = LISTEN_LEN, silence_len = SILENCE_LEN)
+    def self.listen_and_transcribe(length = LISTEN_LEN, silence_len = SILENCE_LEN)
     end
 
-    def continuously_listen_and_transcribe(length = LISTEN_LEN, silence_len = SILENCE_LEN)
+    def self.continuously_listen_and_transcribe(length = LISTEN_LEN, silence_len = SILENCE_LEN)
     end
 end
