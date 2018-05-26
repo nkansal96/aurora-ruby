@@ -16,9 +16,7 @@ module Aurora
         end
 
         def write_to_file(filename)
-            open(filename, 'wb') do |file|
-                file.write(@audio)
-            end
+            Audio.write_to_file(@audio, filename)
         end
 
         def play
@@ -26,6 +24,23 @@ module Aurora
             Audio.play_wav(@audio)
             @playing = false
         end
+
+        # TODO: Pads both sides of audio with specified amount of silence (in seconds)
+        def pad(seconds)
+        end
+
+        # TODO: Pads the left side of the audio with the specified amount of silence (in seconds)
+        def pad_left(seconds)
+        end
+
+        # TODO: Pads the right side of the audio with the specified amount of silence (in seconds)
+        def pad_right
+        end
+
+        # TODO: Trims extraneous silence at the ends of the audio
+        def trim_silence
+        end
+
     end
 
     class Audio
@@ -64,20 +79,41 @@ module Aurora
         FRAMES_PER_BUFFER   = 1
         NUM_CHANNELS        = 1 # mono
         SAMPLE_TYPE         = PA::PaInt16
-        SAMPLE_SIZE         = 2 # bytes
+        SAMPLE_SIZE         = 2 # bytes per sample
 
-        def self.create_wav_file(data, filename)
-            # File.open(filename, 'wb') do |file|
-            #     file.write('RIFF')
-            #     file.write(36 + data.size / 4)
-            #     file.write(data)
-            # end
+        # Converts raw audio data into WAV formatted file
+        def self.create_wav(data)
+            wav = ""
+            wav << 'RIFF'
+            wav << [36 + data.size].pack(FIELD_INFO[:chunk_size].type)
+            wav << 'WAVE'
+            wav << 'fmt '
+            wav << [16].pack(FIELD_INFO[:subchunk1_size].type)
+            wav << [1].pack(FIELD_INFO[:audio_format].type)
+            wav << [NUM_CHANNELS].pack(FIELD_INFO[:num_channels].type)
+            wav << [SAMPLE_RATE].pack(FIELD_INFO[:sample_rate].type)
+            wav << [SAMPLE_RATE * NUM_CHANNELS * SAMPLE_SIZE].pack(FIELD_INFO[:byte_rate].type)
+            wav << [NUM_CHANNELS * SAMPLE_SIZE].pack(FIELD_INFO[:block_align].type)
+            wav << [SAMPLE_SIZE * 8].pack(FIELD_INFO[:bits_per_sample].type)
+            wav << 'data'
+            wav << [data.size].pack(FIELD_INFO[:subchunk2_size].type)
+            wav << data
+
+            return wav
         end
 
+        # Write WAV file to disk
+        def self.write_to_file(wav, filename)
+            File.open(filename, 'wb') do |file|
+                file.write(wav)
+            end
+        end
+
+        # Records for specified number of seconds and returns WAV formatted audio
         def self.record(seconds)
             stream = Fiddle::Pointer.new 0
             num_bytes = FRAMES_PER_BUFFER * NUM_CHANNELS * SAMPLE_SIZE
-            sample_block = '0000'
+            sample_block = '0' * num_bytes  # Buffer string of size num_bytes
             data = String.new
 
             handle_error(PA.Pa_Initialize)
@@ -85,17 +121,14 @@ module Aurora
             handle_error(PA.Pa_StartStream(stream))
 
             # Record audio
-            record_max = ((seconds * SAMPLE_RATE)/ FRAMES_PER_BUFFER) - 1
-            (0..record_max).each do |i|
+            num_samples = (seconds * SAMPLE_RATE) / FRAMES_PER_BUFFER
+            (0..num_samples-1).each do |i|
                 handle_error(PA.Pa_ReadStream(stream, sample_block, FRAMES_PER_BUFFER))
-                puts sample_block
                 data << sample_block
             end
 
             terminate(stream)
-
-            play_wav(data)
-            create_wav_file(data, 'record.wav')
+            create_wav(data)
         end
 
         def self.play_wav(data)
