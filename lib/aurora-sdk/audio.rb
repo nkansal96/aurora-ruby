@@ -23,7 +23,7 @@ module Aurora
 
         def play
             @playing = true
-            Audio.play_wav(@audio)
+            Audio.play_audio(@audio)
             @playing = false
         end
     end
@@ -31,9 +31,7 @@ module Aurora
     class Audio
         PA = Portaudio
 
-        # WAVE PCM Format based on http://soundfile.sapp.org/doc/WaveFormat/
-        # Representation of WAV File contents
-        # TODO: remove
+        # Representation of WAV File
         WavFile = Struct.new(:chunk_id, :chunk_size, :format, :subchunk1_id, :subchunk1_size, :audio_format, :num_channels, :sample_rate, :byte_rate, :block_align, :bits_per_sample, :subchunk2_id, :subchunk2_size, :data)
 
         # Representation of field characteristics
@@ -43,6 +41,7 @@ module Aurora
         #             'M' => string, 'I' => int, 'S' => short
         FieldInfo = Struct.new(:offset, :size, :type)
 
+        # WAVE PCM Format based on http://soundfile.sapp.org/doc/WaveFormat/
         FIELD_INFO = {
             :chunk_id => FieldInfo.new(0, 4, 'M'),
             :chunk_size => FieldInfo.new(4, 4, 'I'),
@@ -65,7 +64,29 @@ module Aurora
         FRAMES_PER_BUFFER   = 2
         NUM_CHANNELS        = 1 # mono
         SAMPLE_TYPE         = PA::PaInt16
-        SAMPLE_SIZE         = 4
+        SAMPLE_SIZE         = 2 # bytes
+
+        def self.parse_wav_file(filename)
+            file_info = []
+            File.open(filename) do |file|
+                FIELD_INFO.each do |info|
+                    buffer = file.read(info[1].size)
+                    file_info << buffer.unpack(info[1].type)
+                end
+
+                # Add remainder of file as data
+                file_info << file.read.to_s
+            end
+            WavFile.new(*file_info)
+        end
+
+        def self.create_wav_file(data, filename)
+            # File.open(filename, 'wb') do |file|
+            #     file.write('RIFF')
+            #     file.write(36 + data.size / 4))
+            #     file.write(data)
+            # end
+        end
 
         def self.record(seconds)
             stream = Fiddle::Pointer.new 0
@@ -91,36 +112,15 @@ module Aurora
             create_wav_file(data, 'record.wav')
         end
 
-        def self.parse_wav_file(filename)
-            file_info = {}
-            File.open(filename) do |file|
-                FIELD_INFO.each do |info|
-                    buffer = file.read(info[1].size)
-                    file_info[info[0]] = buffer.unpack(info[1].type)
-                end
-
-                # Add remainder of file as data
-                file_info[:data] = file.read
-            end
-            WavFile.new(file_info)
-        end
-
-        def self.create_wav_file(data, filename)
-            headers = nil
-            File.open('headers') do |file|
-                headers = file.read(DATA_OFFSET)
-            end
-
-            File.open(filename, 'wb') do |file|
-                file.write('RIFF')
-                file.write(data)
-            end
-        end
-
-        def self.play_wav(data)
-            if !valid_wav?(data)
+        # Plays audio given WAV file data
+        def self.play_audio(wav)
+            if !valid_wav?(wav)
                 raise WAVFileError
             end
+
+            sample_rate = wav.sample_rate
+            sample_size = wav.bits_per_sample / 8
+            frames_per_buffer = wav.byte_rate / sample_rate
 
             stream = Fiddle::Pointer.new 0
 
@@ -130,7 +130,7 @@ module Aurora
 
 
             # Play audio data by iterating through chunks
-            (DATA_OFFSET..data.length-1).step(SAMPLE_SIZE).each do |i|
+            (0..data.size-1).step(SAMPLE_SIZE).each do |i|
                 buffer = data[i..(i+SAMPLE_SIZE-1)]
                 handle_error(PA.Pa_WriteStream(stream, buffer, FRAMES_PER_BUFFER))
             end
@@ -139,26 +139,28 @@ module Aurora
         end
 
         def self.play_file(filename)
-            stream = Fiddle::Pointer.new 0
-
-            handle_error(PA.Pa_Initialize)
-            handle_error(PA.Pa_OpenStream(stream.ref, nil, get_output_params, SAMPLE_RATE, FRAMES_PER_BUFFER, PA::PaClipOff, nil, nil))
-            handle_error(PA.Pa_StartStream(stream))
-
-            # Read audio file in chunks and play
-            File.open(filename) do |file|
-                if !valid_wav?(file)
-                    raise WAVFileError
-                end
-
-                # Play back audio by writing to stream
-                file.seek DATA_OFFSET
-                while (buffer = file.read(SAMPLE_SIZE)) do
-                    handle_error(PA.Pa_WriteStream(stream, buffer, FRAMES_PER_BUFFER))
-                end
-            end
-
-            terminate(stream)
+            file = parse_wav_file(filename)
+            play_audio(file)
+            # stream = Fiddle::Pointer.new 0
+            #
+            # handle_error(PA.Pa_Initialize)
+            # handle_error(PA.Pa_OpenStream(stream.ref, nil, get_output_params, SAMPLE_RATE, FRAMES_PER_BUFFER, PA::PaClipOff, nil, nil))
+            # handle_error(PA.Pa_StartStream(stream))
+            #
+            # # Read audio file in chunks and play
+            # File.open(filename) do |file|
+            #     if !valid_wav?(file)
+            #         raise WAVFileError
+            #     end
+            #
+            #     # Play back audio by writing to stream
+            #     file.seek DATA_OFFSET
+            #     while (buffer = file.read(SAMPLE_SIZE)) do
+            #         handle_error(PA.Pa_WriteStream(stream, buffer, FRAMES_PER_BUFFER))
+            #     end
+            # end
+            #
+            # terminate(stream)
         end
 
         private_class_method def self.terminate(stream)
@@ -226,7 +228,7 @@ module Aurora
 
         # TODO: Validates file headers with expected values for WAV format
         private_class_method def self.valid_wav?(file)
-
+            return true
         end
     end
 end
