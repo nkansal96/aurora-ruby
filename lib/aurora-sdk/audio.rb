@@ -92,15 +92,15 @@ module Aurora
         end
 
         def self.parse_wav_file(filename)
-            file_info = []
+            file_info = {}
             File.open(filename) do |file|
                 FIELD_INFO.each do |info|
                     buffer = file.read(info[1].size)
-                    file_info << buffer.unpack(info[1].type)
+                    file_info[info[0]] = buffer.unpack(info[1].type)
                 end
 
                 # Add remainder of file as data
-                file_info << file.read
+                file_info[:data] = file.read
             end
             WavFile.new(file_info)
         end
