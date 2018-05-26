@@ -25,7 +25,7 @@ module Aurora
         end
     end
 
-    def self.ntinuously_listen(length = LISTEN_LEN, silence_len = SILENCE_LEN)
+    def self.continuously_listen(length = LISTEN_LEN, silence_len = SILENCE_LEN)
     end
 
     def self.listen_and_transcribe(length = LISTEN_LEN, silence_len = SILENCE_LEN)
