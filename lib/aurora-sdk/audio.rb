@@ -224,7 +224,6 @@ module Aurora
 
         private_class_method def self.parse_wav_data(data)
             file_info = []
-            sample_data = []
 
             FIELD_INFO.each do |info|
                 buffer = data[(info[1].offset)..(info[1].offset + info[1].size - 1)]
@@ -233,12 +232,10 @@ module Aurora
 
             sample_size = file_info[10] / 8 # convert bits to bytes
 
-            # Add remainder of wav as sample data
-            (DATA_OFFSET..(data.size-1)).step(sample_size).each do |i|
-                sample_data << data[i..(i+sample_size - 1)]
-            end
-
+            # Unpacks sample string into array of size = subchunk2_size
+            sample_data = data[DATA_OFFSET..(data.size-1)].unpack "a#{sample_size}" * (file_info[12])
             file_info << sample_data
+
             WavFile.new(*file_info)
         end
 
@@ -261,6 +258,7 @@ module Aurora
             end
 
             file_info << sample_data
+
             WavFile.new(*file_info)
         end
 
