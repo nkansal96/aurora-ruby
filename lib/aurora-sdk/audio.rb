@@ -233,33 +233,34 @@ module Aurora
             sample_size = file_info[10] / 8 # convert bits to bytes
 
             # Unpacks sample string into array of size = subchunk2_size
-            sample_data = data[DATA_OFFSET..(data.size-1)].unpack "a#{sample_size}" * (file_info[12])
+            sample_data = data[DATA_OFFSET..(data.size-1)].unpack "a#{sample_size}" * (file_info[12]/sample_size)
             file_info << sample_data
 
             WavFile.new(*file_info)
         end
 
         private_class_method def self.parse_wav_file(filename)
-            file_info = []
-            sample_data = []
-
-            File.open(filename) do |file|
-                FIELD_INFO.each do |info|
-                    buffer = file.read(info[1].size)
-                    file_info << buffer.unpack(info[1].type).first
-                end
-
-                sample_size = file_info[10] / 8 # convert bits to bytes
-
-                # Add remainder of file as data
-                while (buffer = file.read(sample_size)) do
-                    sample_data << buffer
-                end
-            end
-
-            file_info << sample_data
-
-            WavFile.new(*file_info)
+            parse_wav_data(File.read(filename))
+            # file_info = []
+            # sample_data = []
+            #
+            # File.open(filename) do |file|
+            #     FIELD_INFO.each do |info|
+            #         buffer = file.read(info[1].size)
+            #         file_info << buffer.unpack(info[1].type).first
+            #     end
+            #
+            #     sample_size = file_info[10] / 8 # convert bits to bytes
+            #
+            #     # Add remainder of file as data
+            #     while (buffer = file.read(sample_size)) do
+            #         sample_data << buffer
+            #     end
+            # end
+            #
+            # file_info << sample_data
+            #
+            # WavFile.new(*file_info)
         end
 
         # TODO: Validates file headers with expected values for WAV format
