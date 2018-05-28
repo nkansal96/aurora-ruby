@@ -34,11 +34,12 @@ module Aurora
         end
 
         # TODO: Pads the right side of the audio with the specified amount of silence (in seconds)
-        def pad_right
+        def pad_right(seconds)
         end
 
         # TODO: Trims extraneous silence at the ends of the audio
         def trim_silence
+            @audio = Audio.trim_silence(@audio)
         end
 
     end
@@ -47,7 +48,7 @@ module Aurora
         PA = Portaudio
 
         # Representation of WAV File
-        WavFile = Struct.new(:chunk_id, :chunk_size, :format, :subchunk1_id, :subchunk1_size, :audio_format, :num_channels, :sample_rate, :byte_rate, :block_align, :bits_per_sample, :subchunk2_id, :subchunk2_size, :data)
+        WavFile = Struct.new(:chunk_id, :chunk_size, :fformat, :subchunk1_id, :subchunk1_size, :audio_format, :num_channels, :sample_rate, :byte_rate, :block_align, :bits_per_sample, :subchunk2_id, :subchunk2_size, :data)
 
         # Representation of field characteristics
         # :offset   = byte offset in file
@@ -60,7 +61,7 @@ module Aurora
         FIELD_INFO = {
             :chunk_id => FieldInfo.new(0, 4, 'M'),
             :chunk_size => FieldInfo.new(4, 4, 'I'),
-            :format => FieldInfo.new(8, 4, 'M'),
+            :fformat => FieldInfo.new(8, 4, 'M'),
             :subchunk1_id => FieldInfo.new(12, 4, 'M'),
             :subchunk1_size => FieldInfo.new(16, 4, 'I'),
             :audio_format => FieldInfo.new(20, 2, 'S'),
@@ -81,7 +82,7 @@ module Aurora
         SAMPLE_TYPE         = PA::PaInt16
         SAMPLE_SIZE         = 2 # bytes per sample
 
-        # Converts raw audio data into WAV formatted file
+        # Adds WAV headers to raw audio data and returns WAV formatted byte string
         def self.create_wav(data)
             wav = ""
             wav << 'RIFF'
@@ -102,11 +103,24 @@ module Aurora
             return wav
         end
 
-        # Write WAV file to disk
+        # Write WAV data to disk
         def self.write_to_file(wav, filename)
             File.open(filename, 'wb') do |file|
                 file.write(wav)
             end
+        end
+
+        # TODO: Trims extraneous silence at the ends of audio data
+        def self.trim_silence(data)
+            # wav = parse_wav_data(data)
+            # puts wav.data.size
+            # # Trim silence from front
+            # while wav.data.shift == "\x00\x00"
+            # end
+            # puts wav.data.size
+            # sample_size = wav.bits_per_sample / 8
+            # dir = "a#{sample_size}" * (wav.subchunk2_size/sample_size)
+            # data[0..DATA_OFFSET-1] + (wav.data).pack(dir)
         end
 
         # Records for specified number of seconds and returns AudioFile
@@ -160,7 +174,7 @@ module Aurora
         end
 
         private_class_method def self.terminate(stream)
-            handle_error(PA.Pa_StopStream(stream))
+            handle_error(PA.Pa_AbortStream(stream))
             handle_error(PA.Pa_CloseStream(stream))
             handle_error(PA.Pa_Terminate)
         end
@@ -241,30 +255,25 @@ module Aurora
 
         private_class_method def self.parse_wav_file(filename)
             parse_wav_data(File.read(filename))
-            # file_info = []
-            # sample_data = []
-            #
-            # File.open(filename) do |file|
-            #     FIELD_INFO.each do |info|
-            #         buffer = file.read(info[1].size)
-            #         file_info << buffer.unpack(info[1].type).first
-            #     end
-            #
-            #     sample_size = file_info[10] / 8 # convert bits to bytes
-            #
-            #     # Add remainder of file as data
-            #     while (buffer = file.read(sample_size)) do
-            #         sample_data << buffer
-            #     end
-            # end
-            #
-            # file_info << sample_data
-            #
-            # WavFile.new(*file_info)
         end
 
-        # TODO: Validates file headers with expected values for WAV format
+        # Validates headers of WavFile struct with WAV format used for Aurora
         private_class_method def self.valid_wav?(wav)
+            if (wav.chunk_id != 'RIFF' ||
+                wav.chunk_size != (4 + (8 + wav.subchunk1_size) + (8 + wav.subchunk2_size)) ||
+                wav.fformat != 'WAVE' ||
+                wav.subchunk1_id != 'fmt ' ||
+                wav.subchunk1_size != 16 ||
+                wav.audio_format != 1 ||
+                wav.num_channels != NUM_CHANNELS ||
+                wav.sample_rate != SAMPLE_RATE ||
+                wav.byte_rate != wav.sample_rate * wav.num_channels * (wav.bits_per_sample/8) ||
+                wav.block_align != wav.num_channels * (wav.bits_per_sample/8) ||
+                wav.subchunk2_id != 'data' ||
+                wav.subchunk2_size != wav.data.size*(wav.bits_per_sample/8))
+            then
+                return false
+            end
             return true
         end
     end
