@@ -5,6 +5,7 @@ module Aurora
     class AudioFile
         attr_reader :playing, :should_stop
 
+        # audio should be binary string representing WAV file
         def initialize(audio, playing = false, should_stop = false)
             @audio = audio
             @playing = playing
@@ -25,21 +26,30 @@ module Aurora
             @playing = false
         end
 
-        # TODO: Pads both sides of audio with specified amount of silence (in seconds)
+        def stop
+            if @playing
+                @should_stop = true
+            end
+        end
+
+        # Pads both sides of audio with specified amount of silence (in seconds)
         def pad(seconds)
+            @audio = Audio.pad(@audio, seconds)
         end
 
-        # TODO: Pads the left side of the audio with the specified amount of silence (in seconds)
+        # Pads the left side of the audio with the specified amount of silence (in seconds)
         def pad_left(seconds)
+            @audio = Audio.pad_left(@audio, seconds)
         end
 
-        # TODO: Pads the right side of the audio with the specified amount of silence (in seconds)
+        # Pads the right side of the audio with the specified amount of silence (in seconds)
         def pad_right(seconds)
+            @audio = Audio.pad_right(@audio, seconds)
         end
 
-        # TODO: Trims extraneous silence at the ends of the audio
+        # Trims extraneous silence at the ends of the audio
         def trim_silence
-            @audio = Audio.trim_silence(@audio)
+            @audio = Audio.trim_silence(0.03, 0.10, @audio)
         end
 
     end
@@ -54,7 +64,7 @@ module Aurora
         # :offset   = byte offset in file
         # :size     = size in bytes
         # :type     = format for unpacking (based on type and endian)
-        #             'M' => string, 'I' => int, 'S' => short
+        #   'M' => string, 'I' => int, 'S' => short
         FieldInfo = Struct.new(:offset, :size, :type)
 
         # WAVE PCM Format based on http://soundfile.sapp.org/doc/WaveFormat/
@@ -76,6 +86,7 @@ module Aurora
 
         DATA_OFFSET         = 44
 
+        SILENCE_THRESHOLD   = 2048
         SAMPLE_RATE         = 16000
         FRAMES_PER_BUFFER   = 1
         NUM_CHANNELS        = 1 # mono
@@ -110,17 +121,51 @@ module Aurora
             end
         end
 
-        # TODO: Trims extraneous silence at the ends of audio data
-        def self.trim_silence(data)
-            # wav = parse_wav_data(data)
-            # puts wav.data.size
-            # # Trim silence from front
-            # while wav.data.shift == "\x00\x00"
-            # end
-            # puts wav.data.size
-            # sample_size = wav.bits_per_sample / 8
-            # dir = "a#{sample_size}" * (wav.subchunk2_size/sample_size)
-            # data[0..DATA_OFFSET-1] + (wav.data).pack(dir)
+        # Trims extraneous silence at the ends of audio data
+        #   threshold: decimal between 0 and 1 relative to max amplitude
+        #   padding: in seconds
+        def self.trim_silence(threshold, padding, data)
+            wav = parse_wav_data(data)
+            values = get_sample_values(wav.data)
+            max_amplitude = (2**(wav.bits_per_sample)) / 2.0
+            silence_threshold = threshold * max_amplitude
+
+            # Trim silence from front
+            front = 0
+            while values[front] <= silence_threshold && front < values.size - 1
+                front += 1
+            end
+
+            # Trim silence from back
+            back = values.size - 1
+            while values[back] <= silence_threshold && back >= 0
+                back -= 1
+            end
+
+            # Add padding
+            sample_size = wav.bits_per_sample / 8
+            pad = padding * wav.sample_rate * sample_size
+            create_wav((values[front-pad..back+pad]).pack('s*'))
+        end
+
+        def self.pad_left(data, seconds)
+            wav = parse_wav_data(data)
+            sample_size = wav.bits_per_sample / 8
+            pad_size = seconds * wav.sample_rate * sample_size
+            wav.data.unshift(*Array.new(pad_size, "\x00\x00"))
+            create_wav(wav.data.join)
+        end
+
+        def self.pad_right(data, seconds)
+            wav = parse_wav_data(data)
+            sample_size = wav.bits_per_sample / 8
+            pad_size = seconds * wav.sample_rate * sample_size
+            wav.data.push(*Array.new(pad_size, "\x00\x00"))
+            create_wav(wav.data.join)
+        end
+
+        def self.pad(data, seconds)
+            pad_right(pad_left(data, seconds), seconds)
         end
 
         # Records for specified number of seconds and returns AudioFile
@@ -130,14 +175,14 @@ module Aurora
             sample_block = '0' * num_bytes  # Buffer string of size num_bytes
             data = String.new
 
-            handle_error(PA.Pa_Initialize)
-            handle_error(PA.Pa_OpenStream(stream.ref, get_input_params, nil, SAMPLE_RATE, FRAMES_PER_BUFFER, PA::PaClipOff, nil, nil))
-            handle_error(PA.Pa_StartStream(stream))
+            handle_error(PA.Pa_Initialize, stream)
+            handle_error(PA.Pa_OpenStream(stream.ref, get_input_params, nil, SAMPLE_RATE, FRAMES_PER_BUFFER, PA::PaClipOff, nil, nil), stream)
+            handle_error(PA.Pa_StartStream(stream), stream)
 
             # Record audio
             num_samples = (seconds * SAMPLE_RATE) / FRAMES_PER_BUFFER
             (0..num_samples-1).each do |i|
-                handle_error(PA.Pa_ReadStream(stream, sample_block, FRAMES_PER_BUFFER))
+                handle_error(PA.Pa_ReadStream(stream, sample_block, FRAMES_PER_BUFFER), stream)
                 data << sample_block
             end
 
@@ -161,22 +206,22 @@ module Aurora
 
             stream = Fiddle::Pointer.new 0
 
-            handle_error(PA.Pa_Initialize)
-            handle_error(PA.Pa_OpenStream(stream.ref, nil, get_output_params(wav), wav.sample_rate, FRAMES_PER_BUFFER, PA::PaClipOff, nil, nil))
-            handle_error(PA.Pa_StartStream(stream))
+            handle_error(PA.Pa_Initialize, stream)
+            handle_error(PA.Pa_OpenStream(stream.ref, nil, get_output_params(wav), wav.sample_rate, FRAMES_PER_BUFFER, PA::PaClipOff, nil, nil), stream)
+            handle_error(PA.Pa_StartStream(stream), stream)
 
             # Play audio data by iterating through chunks
             wav.data.each do |buffer|
-                handle_error(PA.Pa_WriteStream(stream, buffer, FRAMES_PER_BUFFER))
+                handle_error(PA.Pa_WriteStream(stream, buffer, FRAMES_PER_BUFFER), stream)
             end
 
             terminate(stream)
         end
 
         private_class_method def self.terminate(stream)
-            handle_error(PA.Pa_AbortStream(stream))
-            handle_error(PA.Pa_CloseStream(stream))
-            handle_error(PA.Pa_Terminate)
+            handle_error(PA.Pa_StopStream(stream), stream)
+            handle_error(PA.Pa_CloseStream(stream), stream)
+            handle_error(PA.Pa_Terminate, stream)
         end
 
         private_class_method def self.get_input_params
@@ -229,8 +274,14 @@ module Aurora
             return output_param
         end
 
-        private_class_method def self.handle_error(err)
-            if err != PA::PaErrorCode::PaNoError
+        private_class_method def self.handle_error(err, stream)
+            if err == PA::PaErrorCode::PaInputOverflowed
+                return
+            elsif err != PA::PaErrorCode::PaNoError
+                if !stream.null?
+                    PA.Pa_AbortStream(stream)
+                    PA.Pa_CloseStream(stream)
+                end
                 PA.Pa_Terminate
                 raise PortAudioError.new(PA.Pa_GetErrorText(err))
             end
@@ -257,6 +308,8 @@ module Aurora
             parse_wav_data(File.read(filename))
         end
 
+        # UTILITY FUNCTIONS
+
         # Validates headers of WavFile struct with WAV format used for Aurora
         private_class_method def self.valid_wav?(wav)
             if (wav.chunk_id != 'RIFF' ||
@@ -275,6 +328,21 @@ module Aurora
                 return false
             end
             return true
+        end
+
+        # Converts audio data to 16-bit signed
+        private_class_method def self.get_sample_values(samples)
+            samples.map { |sample| sample.unpack('s').first }
+        end
+
+        # Calculates RMS of values in array
+        private_class_method def self.rms(values)
+            Math.sqrt(values.inject(0.0) {|sum, x| sum + x*x} / values.length)
+        end
+
+        # Determines whether audio slice is silent
+        private_class_method def self.silent?(samples)
+            SILENCE_THRESHOLD > get_sample_values(samples).max
         end
     end
 end
