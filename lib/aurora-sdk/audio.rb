@@ -230,7 +230,7 @@ module Aurora
         end
 
         private_class_method def self.handle_error(err)
-            if err != PA::PaErrorCode::PaNoError
+            if ![PA::PaErrorCode::PaNoError, PA::PaErrorCode::PaInputOverflowed].include? err
                 PA.Pa_Terminate
                 raise PortAudioError.new(PA.Pa_GetErrorText(err))
             end

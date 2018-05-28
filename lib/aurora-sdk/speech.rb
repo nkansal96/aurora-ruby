@@ -25,12 +25,26 @@ module Aurora
         end
     end
 
+    # TODO: for these continuous functions, we need to be able to break from the loop
+    # after there has been silence
+
     def self.continuously_listen(length = LISTEN_LEN, silence_len = SILENCE_LEN)
+        Enumerator.new {|y|
+            loop {
+                y.yield Aurora.listen(length, silence_len)
+            }
+        }
     end
 
     def self.listen_and_transcribe(length = LISTEN_LEN, silence_len = SILENCE_LEN)
+        # TODO: Implement with streams
     end
 
     def self.continuously_listen_and_transcribe(length = LISTEN_LEN, silence_len = SILENCE_LEN)
+        Enumerator.new {|y|
+            loop {
+                y.yield Aurora.listen_and_transcribe(length, silence_len)
+            }
+        }
     end
 end
