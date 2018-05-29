@@ -20,8 +20,6 @@ module Aurora
             Audio.write_to_file(@audio, filename)
         end
 
-        # TODO: Make playback non-blocking
-
         def play
             @playing = true
             Audio.play_wav(@audio)

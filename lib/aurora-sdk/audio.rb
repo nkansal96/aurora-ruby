@@ -40,6 +40,7 @@ module Aurora
         NUM_CHANNELS        = 1 # mono
         SAMPLE_TYPE         = PA::PaInt16
         SAMPLE_SIZE         = 2 # bytes per sample
+        BYTES_PER_BLOCK     = FRAMES_PER_BUFFER * NUM_CHANNELS * SAMPLE_SIZE
 
         # Adds WAV headers to raw audio data and returns WAV formatted byte string
         def self.create_wav(data)
@@ -116,60 +117,75 @@ module Aurora
             pad_right(pad_left(data, seconds), seconds)
         end
 
-        # Records for specified number of seconds and returns AudioFile
-        def self.record(seconds)
-            stream = Fiddle::Pointer.new 0
-            num_bytes = FRAMES_PER_BUFFER * NUM_CHANNELS * SAMPLE_SIZE
-            sample_block = '0' * num_bytes  # Buffer string of size num_bytes
-            data = String.new
-
-            handle_error(PA.Pa_Initialize, stream)
-            handle_error(PA.Pa_OpenStream(stream.ref, get_input_params, nil, SAMPLE_RATE, FRAMES_PER_BUFFER, PA::PaClipOff, nil, nil), stream)
-            handle_error(PA.Pa_StartStream(stream), stream)
-
-            num_samples = (seconds * SAMPLE_RATE) / FRAMES_PER_BUFFER
-
-            # Record audio
-            (0..num_samples-1).each do |i|
-                handle_error(PA.Pa_ReadStream(stream, sample_block, FRAMES_PER_BUFFER), stream)
-                data << sample_block
+        def self.record(seconds, silence_len)
+            if seconds <= 0 and silence_len <= 0
+                # TODO: create exception for this situation
+                return nil
             end
 
-            terminate(stream)
+            if seconds > 0
+                record_enum = record_for_time(seconds)
+            elsif silence_len > 0
+                record_enum = record_until_silence(silence_len)
+            end
+
+            data = String.new
+
+            record_enum.each do |chunk|
+                data << chunk
+            end
+
             AudioFile.new(create_wav(data))
         end
 
+        # Records for specified number of seconds and returns AudioFile
+        def self.record_for_time(seconds)
+            Enumerator.new {|y|
+                stream = Fiddle::Pointer.new 0
+                sample_block = '0' * BYTES_PER_BLOCK  # Buffer string of size num_bytes
+
+                init_stream(stream)
+
+                num_samples = (seconds * SAMPLE_RATE) / FRAMES_PER_BUFFER
+
+                # Record audio
+                (0..num_samples-1).each do |i|
+                    handle_error(PA.Pa_ReadStream(stream, sample_block, FRAMES_PER_BUFFER), stream)
+                    y.yield sample_block
+                end
+
+                terminate_stream(stream)
+            }
+        end
+
         def self.record_until_silence(silence_len)
-            stream = Fiddle::Pointer.new 0
-            num_bytes = FRAMES_PER_BUFFER * NUM_CHANNELS * SAMPLE_SIZE
-            sample_block = '0' * num_bytes  # Buffer string of size num_bytes
-            data = String.new
+            Enumerator.new {|y|
+                stream = Fiddle::Pointer.new 0
+                sample_block = '0' * BYTES_PER_BLOCK  # Buffer string of size num_bytes
 
-            handle_error(PA.Pa_Initialize, stream)
-            handle_error(PA.Pa_OpenStream(stream.ref, get_input_params, nil, SAMPLE_RATE, FRAMES_PER_BUFFER, PA::PaClipOff, nil, nil), stream)
-            handle_error(PA.Pa_StartStream(stream), stream)
+                init_stream(stream)
 
-            num_silence_samples = (silence_len * SAMPLE_RATE) / FRAMES_PER_BUFFER
-            silence_counter = 0
+                num_silence_samples = (silence_len * SAMPLE_RATE) / FRAMES_PER_BUFFER
+                silence_counter = 0
 
-            # Record audio
-            while true
-                handle_error(PA.Pa_ReadStream(stream, sample_block, FRAMES_PER_BUFFER), stream)
-                data << sample_block
+                # Record audio
+                while true
+                    handle_error(PA.Pa_ReadStream(stream, sample_block, FRAMES_PER_BUFFER), stream)
+                    y.yield sample_block
 
-                if silent? [sample_block]
-                    silence_counter += 1
-                else
-                    silence_counter = 0
+                    if silent? [sample_block]
+                        silence_counter += 1
+                    else
+                        silence_counter = 0
+                    end
+
+                    if silence_counter >= num_silence_samples
+                        break
+                    end
                 end
 
-                if silence_counter >= num_silence_samples
-                    break
-                end
-            end
-
-            terminate(stream)
-            AudioFile.new(create_wav(data))
+                terminate_stream(stream)
+            }
         end
 
         def self.play_wav(data)
@@ -197,10 +213,16 @@ module Aurora
                 handle_error(PA.Pa_WriteStream(stream, buffer, FRAMES_PER_BUFFER), stream)
             end
 
-            terminate(stream)
+            terminate_stream(stream)
         end
 
-        private_class_method def self.terminate(stream)
+        private_class_method def self.init_stream(stream)
+            handle_error(PA.Pa_Initialize, stream)
+            handle_error(PA.Pa_OpenStream(stream.ref, get_input_params, nil, SAMPLE_RATE, FRAMES_PER_BUFFER, PA::PaClipOff, nil, nil), stream)
+            handle_error(PA.Pa_StartStream(stream), stream)
+        end
+
+        private_class_method def self.terminate_stream(stream)
             handle_error(PA.Pa_StopStream(stream), stream)
             handle_error(PA.Pa_CloseStream(stream), stream)
             handle_error(PA.Pa_Terminate, stream)
