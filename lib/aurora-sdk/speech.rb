@@ -20,17 +20,26 @@ module Aurora
     SILENCE_LEN = 1.0
 
     def self.listen(length = LISTEN_LEN, silence_len = SILENCE_LEN)
-        if length != 0
-            Speech.new(Audio.record(length))
-        end
+        Speech.new(Audio.record(length, silence_len))
     end
 
     def self.continuously_listen(length = LISTEN_LEN, silence_len = SILENCE_LEN)
+        Enumerator.new {|y|
+            loop {
+                y.yield Aurora.listen(length, silence_len)
+            }
+        }
     end
 
     def self.listen_and_transcribe(length = LISTEN_LEN, silence_len = SILENCE_LEN)
+        # TODO: Implement with streams
     end
 
     def self.continuously_listen_and_transcribe(length = LISTEN_LEN, silence_len = SILENCE_LEN)
+        Enumerator.new {|y|
+            loop {
+                y.yield Aurora.listen_and_transcribe(length, silence_len)
+            }
+        }
     end
 end

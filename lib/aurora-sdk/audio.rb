@@ -1,59 +1,7 @@
-require 'enumerator'
 require_relative '../portaudio'
+require_relative 'audio_file'
 
 module Aurora
-    class AudioFile
-        attr_reader :playing, :should_stop
-
-        # audio should be binary string representing WAV file
-        def initialize(audio, playing = false, should_stop = false)
-            @audio = audio
-            @playing = playing
-            @should_stop = should_stop
-        end
-
-        def to_wav
-            @audio
-        end
-
-        def write_to_file(filename)
-            Audio.write_to_file(@audio, filename)
-        end
-
-        def play
-            @playing = true
-            Audio.play_wav(@audio)
-            @playing = false
-        end
-
-        def stop
-            if @playing
-                @should_stop = true
-            end
-        end
-
-        # Pads both sides of audio with specified amount of silence (in seconds)
-        def pad(seconds)
-            @audio = Audio.pad(@audio, seconds)
-        end
-
-        # Pads the left side of the audio with the specified amount of silence (in seconds)
-        def pad_left(seconds)
-            @audio = Audio.pad_left(@audio, seconds)
-        end
-
-        # Pads the right side of the audio with the specified amount of silence (in seconds)
-        def pad_right(seconds)
-            @audio = Audio.pad_right(@audio, seconds)
-        end
-
-        # Trims extraneous silence at the ends of the audio
-        def trim_silence
-            @audio = Audio.trim_silence(0.03, 0.10, @audio)
-        end
-
-    end
-
     class Audio
         PA = Portaudio
 
@@ -92,6 +40,7 @@ module Aurora
         NUM_CHANNELS        = 1 # mono
         SAMPLE_TYPE         = PA::PaInt16
         SAMPLE_SIZE         = 2 # bytes per sample
+        BYTES_PER_BLOCK     = FRAMES_PER_BUFFER * NUM_CHANNELS * SAMPLE_SIZE
 
         # Adds WAV headers to raw audio data and returns WAV formatted byte string
         def self.create_wav(data)
@@ -170,26 +119,75 @@ module Aurora
             create_wav(wav.data.join)
         end
 
-        # Records for specified number of seconds and returns AudioFile
-        def self.record(seconds)
-            stream = Fiddle::Pointer.new 0
-            num_bytes = FRAMES_PER_BUFFER * NUM_CHANNELS * SAMPLE_SIZE
-            sample_block = '0' * num_bytes  # Buffer string of size num_bytes
-            data = String.new
-
-            handle_error(PA.Pa_Initialize, stream)
-            handle_error(PA.Pa_OpenStream(stream.ref, get_input_params, nil, SAMPLE_RATE, FRAMES_PER_BUFFER, PA::PaClipOff, nil, nil), stream)
-            handle_error(PA.Pa_StartStream(stream), stream)
-
-            # Record audio
-            num_samples = (seconds * SAMPLE_RATE) / FRAMES_PER_BUFFER
-            (0..num_samples-1).each do |i|
-                handle_error(PA.Pa_ReadStream(stream, sample_block, FRAMES_PER_BUFFER), stream)
-                data << sample_block
+        def self.record(seconds, silence_len)
+            if seconds <= 0 and silence_len <= 0
+                # TODO: create exception for this situation
+                return nil
             end
 
-            terminate(stream)
+            if seconds > 0
+                record_enum = record_for_time(seconds)
+            elsif silence_len > 0
+                record_enum = record_until_silence(silence_len)
+            end
+
+            data = String.new
+
+            record_enum.each do |chunk|
+                data << chunk
+            end
+
             AudioFile.new(create_wav(data))
+        end
+
+        # Records for specified number of seconds and returns AudioFile
+        def self.record_for_time(seconds)
+            Enumerator.new {|y|
+                stream = Fiddle::Pointer.new 0
+                sample_block = '0' * BYTES_PER_BLOCK  # Buffer string of size num_bytes
+
+                init_stream(stream)
+
+                num_samples = (seconds * SAMPLE_RATE) / FRAMES_PER_BUFFER
+
+                # Record audio
+                (0..num_samples-1).each do |i|
+                    handle_error(PA.Pa_ReadStream(stream, sample_block, FRAMES_PER_BUFFER), stream)
+                    y.yield sample_block
+                end
+
+                terminate_stream(stream)
+            }
+        end
+
+        def self.record_until_silence(silence_len)
+            Enumerator.new {|y|
+                stream = Fiddle::Pointer.new 0
+                sample_block = '0' * BYTES_PER_BLOCK  # Buffer string of size num_bytes
+
+                init_stream(stream)
+
+                num_silence_samples = (silence_len * SAMPLE_RATE) / FRAMES_PER_BUFFER
+                silence_counter = 0
+
+                # Record audio
+                while true
+                    handle_error(PA.Pa_ReadStream(stream, sample_block, FRAMES_PER_BUFFER), stream)
+                    y.yield sample_block
+
+                    if silent? [sample_block]
+                        silence_counter += 1
+                    else
+                        silence_counter = 0
+                    end
+
+                    if silence_counter >= num_silence_samples
+                        break
+                    end
+                end
+
+                terminate_stream(stream)
+            }
         end
 
         def self.play_wav(data)
@@ -217,10 +215,16 @@ module Aurora
                 handle_error(PA.Pa_WriteStream(stream, buffer, FRAMES_PER_BUFFER), stream)
             end
 
-            terminate(stream)
+            terminate_stream(stream)
         end
 
-        private_class_method def self.terminate(stream)
+        private_class_method def self.init_stream(stream)
+            handle_error(PA.Pa_Initialize, stream)
+            handle_error(PA.Pa_OpenStream(stream.ref, get_input_params, nil, SAMPLE_RATE, FRAMES_PER_BUFFER, PA::PaClipOff, nil, nil), stream)
+            handle_error(PA.Pa_StartStream(stream), stream)
+        end
+
+        private_class_method def self.terminate_stream(stream)
             handle_error(PA.Pa_StopStream(stream), stream)
             handle_error(PA.Pa_CloseStream(stream), stream)
             handle_error(PA.Pa_Terminate, stream)
