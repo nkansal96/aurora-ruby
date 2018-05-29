@@ -2,7 +2,7 @@ require 'rake/testtask'
 
 desc 'Run all tests.'
 Rake::TestTask.new do |t|
-  t.pattern = './test/aurora/*_test.rb'
+  t.pattern = './test/**/*_test.rb'
 end
 
 desc 'Delete gem build files.'
