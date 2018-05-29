@@ -76,18 +76,18 @@ module Aurora
         def self.trim_silence(threshold, padding, data)
             wav = parse_wav_data(data)
             values = get_sample_values(wav.data)
-            max_amplitude = (2**(wav.bits_per_sample)) / 2.0
+            max_amplitude = (1 << wav.bits_per_sample) / 2.0
             silence_threshold = threshold * max_amplitude
 
             # Trim silence from front
             front = 0
-            while values[front] <= silence_threshold && front < values.size - 1
+            while (rms [values[front]]) <= silence_threshold && front < values.size - 1
                 front += 1
             end
 
             # Trim silence from back
             back = values.size - 1
-            while values[back] <= silence_threshold && back >= 0
+            while (rms [values[back]]) <= silence_threshold && back >= 0
                 back -= 1
             end
 
@@ -108,12 +108,12 @@ module Aurora
         def self.pad(data, seconds, left = true, right = true)
             wav = parse_wav_data(data)
             sample_size = wav.bits_per_sample / 8
-            pad_size = seconds * wav.sample_rate * sample_size
+            pad_size = seconds * wav.sample_rate
             if left
-                wav.data.unshift(*Array.new(pad_size, "\x00\x00"))
+                wav.data.unshift(*Array.new(pad_size, "\x00" * sample_size))
             end
             if right
-                wav.data.push(*Array.new(pad_size, "\x00\x00"))
+                wav.data.push(*Array.new(pad_size, "\x00" * sample_size))
             end
 
             create_wav(wav.data.join)
@@ -146,7 +146,7 @@ module Aurora
                 stream = Fiddle::Pointer.new 0
                 sample_block = '0' * BYTES_PER_BLOCK  # Buffer string of size num_bytes
 
-                init_stream(stream)
+                init_input_stream(stream)
 
                 num_samples = (seconds * SAMPLE_RATE) / FRAMES_PER_BUFFER
 
@@ -165,7 +165,7 @@ module Aurora
                 stream = Fiddle::Pointer.new 0
                 sample_block = '0' * BYTES_PER_BLOCK  # Buffer string of size num_bytes
 
-                init_stream(stream)
+                init_input_stream(stream)
 
                 num_silence_samples = (silence_len * SAMPLE_RATE) / FRAMES_PER_BUFFER
                 silence_counter = 0
@@ -218,7 +218,7 @@ module Aurora
             terminate_stream(stream)
         end
 
-        private_class_method def self.init_stream(stream)
+        private_class_method def self.init_input_stream(stream)
             handle_error(PA.Pa_Initialize, stream)
             handle_error(PA.Pa_OpenStream(stream.ref, get_input_params, nil, SAMPLE_RATE, FRAMES_PER_BUFFER, PA::PaClipOff, nil, nil), stream)
             handle_error(PA.Pa_StartStream(stream), stream)
