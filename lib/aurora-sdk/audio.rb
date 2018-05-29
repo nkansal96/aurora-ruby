@@ -149,23 +149,25 @@ module Aurora
         end
 
         def self.pad_left(data, seconds)
-            wav = parse_wav_data(data)
-            sample_size = wav.bits_per_sample / 8
-            pad_size = seconds * wav.sample_rate * sample_size
-            wav.data.unshift(*Array.new(pad_size, "\x00\x00"))
-            create_wav(wav.data.join)
+            pad(data, seconds, true, false)
         end
 
         def self.pad_right(data, seconds)
+            pad(data, seconds, false, true)
+        end
+
+        def self.pad(data, seconds, left = true, right = true)
             wav = parse_wav_data(data)
             sample_size = wav.bits_per_sample / 8
             pad_size = seconds * wav.sample_rate * sample_size
-            wav.data.push(*Array.new(pad_size, "\x00\x00"))
-            create_wav(wav.data.join)
-        end
+            if left
+                wav.data.unshift(*Array.new(pad_size, "\x00\x00"))
+            end
+            if right
+                wav.data.push(*Array.new(pad_size, "\x00\x00"))
+            end
 
-        def self.pad(data, seconds)
-            pad_right(pad_left(data, seconds), seconds)
+            create_wav(wav.data.join)
         end
 
         # Records for specified number of seconds and returns AudioFile
