@@ -20,13 +20,12 @@ module Aurora
     SILENCE_LEN = 1.0
 
     def self.listen(length = LISTEN_LEN, silence_len = SILENCE_LEN)
-        if length != 0
+        if length >= 0
             Speech.new(Audio.record(length))
+        elsif silence_len >= 0
+            Speech.new(Audio.record_until_silence(silence_len))
         end
     end
-
-    # TODO: for these continuous functions, we need to be able to break from the loop
-    # after there has been silence
 
     def self.continuously_listen(length = LISTEN_LEN, silence_len = SILENCE_LEN)
         Enumerator.new {|y|

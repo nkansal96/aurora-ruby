@@ -19,6 +19,8 @@ module Aurora
             Audio.write_to_file(@audio, filename)
         end
 
+        # TODO: Make playback non-blocking
+
         def play
             @playing = true
             Audio.play_wav(@audio)
@@ -178,11 +180,45 @@ module Aurora
             handle_error(PA.Pa_OpenStream(stream.ref, get_input_params, nil, SAMPLE_RATE, FRAMES_PER_BUFFER, PA::PaClipOff, nil, nil), stream)
             handle_error(PA.Pa_StartStream(stream), stream)
 
-            # Record audio
             num_samples = (seconds * SAMPLE_RATE) / FRAMES_PER_BUFFER
+
+            # Record audio
             (0..num_samples-1).each do |i|
                 handle_error(PA.Pa_ReadStream(stream, sample_block, FRAMES_PER_BUFFER), stream)
                 data << sample_block
+            end
+
+            terminate(stream)
+            AudioFile.new(create_wav(data))
+        end
+
+        def self.record_until_silence(silence_len)
+            stream = Fiddle::Pointer.new 0
+            num_bytes = FRAMES_PER_BUFFER * NUM_CHANNELS * SAMPLE_SIZE
+            sample_block = '0' * num_bytes  # Buffer string of size num_bytes
+            data = String.new
+
+            handle_error(PA.Pa_Initialize, stream)
+            handle_error(PA.Pa_OpenStream(stream.ref, get_input_params, nil, SAMPLE_RATE, FRAMES_PER_BUFFER, PA::PaClipOff, nil, nil), stream)
+            handle_error(PA.Pa_StartStream(stream), stream)
+
+            num_silence_samples = (silence_len * SAMPLE_RATE) / FRAMES_PER_BUFFER
+            silence_counter = 0
+
+            # Record audio
+            while true
+                handle_error(PA.Pa_ReadStream(stream, sample_block, FRAMES_PER_BUFFER), stream)
+                data << sample_block
+
+                if silent? [sample_block]
+                    silence_counter += 1
+                else
+                    silence_counter = 0
+                end
+
+                if silence_counter >= num_silence_samples
+                    break
+                end
             end
 
             terminate(stream)
