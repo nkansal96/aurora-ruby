@@ -43,7 +43,7 @@ module Aurora
         BYTES_PER_BLOCK     = FRAMES_PER_BUFFER * NUM_CHANNELS * SAMPLE_SIZE
 
         # Adds WAV headers to raw audio data and returns WAV formatted byte string
-        def self.create_wav(data)
+        def self.create_wav(data, spec_size=0)
             wav = ""
             wav << 'RIFF'
             wav << [36 + data.size].pack(FIELD_INFO[:chunk_size].type)
@@ -57,7 +57,7 @@ module Aurora
             wav << [NUM_CHANNELS * SAMPLE_SIZE].pack(FIELD_INFO[:block_align].type)
             wav << [SAMPLE_SIZE * 8].pack(FIELD_INFO[:bits_per_sample].type)
             wav << 'data'
-            wav << [data.size].pack(FIELD_INFO[:subchunk2_size].type)
+            wav << [(spec_size == 0 ? data.size : spec_size)].pack(FIELD_INFO[:subchunk2_size].type)
             wav << data
 
             return wav
@@ -125,11 +125,7 @@ module Aurora
                 return nil
             end
 
-            if seconds > 0
-                record_enum = record_for_time(seconds)
-            elsif silence_len > 0
-                record_enum = record_until_silence(silence_len)
-            end
+            record_enum = get_record_enum(seconds, silence_len)
 
             data = String.new
 
@@ -138,6 +134,16 @@ module Aurora
             end
 
             AudioFile.new(create_wav(data))
+        end
+
+        def self.get_record_enum(seconds, silence_len)
+            if seconds > 0
+                return record_for_time(seconds)
+            elsif silence_len > 0
+                return record_until_silence(silence_len)
+            end
+
+            return nil
         end
 
         # Records for specified number of seconds and returns AudioFile
