@@ -49,7 +49,7 @@ module Aurora
 
         # Trims extraneous silence at the ends of the audio
         def trim_silence
-            @audio = Audio.trim_silence(0.03, 0.10, @audio)
+            @audio = Audio.trim_silence(0.03, 0.1, @audio)
         end
 
     end
