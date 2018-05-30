@@ -76,18 +76,18 @@ module Aurora
         def self.trim_silence(threshold, padding, data)
             wav = parse_wav_data(data)
             values = get_sample_values(wav.data)
-            max_amplitude = (2**(wav.bits_per_sample)) / 2.0
+            max_amplitude = (1 << wav.bits_per_sample) / 2.0
             silence_threshold = threshold * max_amplitude
 
             # Trim silence from front
             front = 0
-            while values[front] <= silence_threshold && front < values.size - 1
+            while (rms [values[front]]) <= silence_threshold && front < values.size - 1
                 front += 1
             end
 
             # Trim silence from back
             back = values.size - 1
-            while values[back] <= silence_threshold && back >= 0
+            while (rms [values[back]]) <= silence_threshold && back >= 0
                 back -= 1
             end
 
@@ -98,23 +98,25 @@ module Aurora
         end
 
         def self.pad_left(data, seconds)
-            wav = parse_wav_data(data)
-            sample_size = wav.bits_per_sample / 8
-            pad_size = seconds * wav.sample_rate * sample_size
-            wav.data.unshift(*Array.new(pad_size, "\x00\x00"))
-            create_wav(wav.data.join)
+            pad(data, seconds, true, false)
         end
 
         def self.pad_right(data, seconds)
-            wav = parse_wav_data(data)
-            sample_size = wav.bits_per_sample / 8
-            pad_size = seconds * wav.sample_rate * sample_size
-            wav.data.push(*Array.new(pad_size, "\x00\x00"))
-            create_wav(wav.data.join)
+            pad(data, seconds, false, true)
         end
 
-        def self.pad(data, seconds)
-            pad_right(pad_left(data, seconds), seconds)
+        def self.pad(data, seconds, left = true, right = true)
+            wav = parse_wav_data(data)
+            sample_size = wav.bits_per_sample / 8
+            pad_size = seconds * wav.sample_rate
+            if left
+                wav.data.unshift(*Array.new(pad_size, "\x00" * sample_size))
+            end
+            if right
+                wav.data.push(*Array.new(pad_size, "\x00" * sample_size))
+            end
+
+            create_wav(wav.data.join)
         end
 
         def self.record(seconds, silence_len)
