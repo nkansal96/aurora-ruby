@@ -14,8 +14,6 @@ module Aurora
         end
     end
 
-    # TODO: Listening Functions
-
     LISTEN_LEN = 0
     SILENCE_LEN = 1.0
 
@@ -32,7 +30,7 @@ module Aurora
     end
 
     def self.listen_and_transcribe(length = LISTEN_LEN, silence_len = SILENCE_LEN)
-        # TODO: Implement with streams
+        Aurora::Api.get_stt(nil, true, Audio.get_record_enum(length, silence_len))
     end
 
     def self.continuously_listen_and_transcribe(length = LISTEN_LEN, silence_len = SILENCE_LEN)

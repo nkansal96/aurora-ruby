@@ -43,7 +43,7 @@ module Aurora
         BYTES_PER_BLOCK     = FRAMES_PER_BUFFER * NUM_CHANNELS * SAMPLE_SIZE
 
         # Adds WAV headers to raw audio data and returns WAV formatted byte string
-        def self.create_wav(data)
+        def self.create_wav(data, spec_size=0)
             wav = ""
             wav << 'RIFF'
             wav << [36 + data.size].pack(FIELD_INFO[:chunk_size].type)
@@ -57,7 +57,7 @@ module Aurora
             wav << [NUM_CHANNELS * SAMPLE_SIZE].pack(FIELD_INFO[:block_align].type)
             wav << [SAMPLE_SIZE * 8].pack(FIELD_INFO[:bits_per_sample].type)
             wav << 'data'
-            wav << [data.size].pack(FIELD_INFO[:subchunk2_size].type)
+            wav << [(spec_size == 0 ? data.size : spec_size)].pack(FIELD_INFO[:subchunk2_size].type)
             wav << data
 
             return wav
@@ -123,11 +123,7 @@ module Aurora
                 return nil
             end
 
-            if seconds > 0
-                record_enum = record_for_time(seconds)
-            elsif silence_len > 0
-                record_enum = record_until_silence(silence_len)
-            end
+            record_enum = get_record_enum(seconds, silence_len)
 
             data = String.new
 
@@ -138,13 +134,23 @@ module Aurora
             AudioFile.new(create_wav(data))
         end
 
+        def self.get_record_enum(seconds, silence_len)
+            if seconds > 0
+                return record_for_time(seconds)
+            elsif silence_len > 0
+                return record_until_silence(silence_len)
+            end
+
+            return nil
+        end
+
         # Records for specified number of seconds and returns AudioFile
         def self.record_for_time(seconds)
             Enumerator.new {|y|
                 stream = Fiddle::Pointer.new 0
                 sample_block = '0' * BYTES_PER_BLOCK  # Buffer string of size num_bytes
 
-                init_stream(stream)
+                init_input_stream(stream)
 
                 num_samples = (seconds * SAMPLE_RATE) / FRAMES_PER_BUFFER
 
@@ -163,7 +169,7 @@ module Aurora
                 stream = Fiddle::Pointer.new 0
                 sample_block = '0' * BYTES_PER_BLOCK  # Buffer string of size num_bytes
 
-                init_stream(stream)
+                init_input_stream(stream)
 
                 num_silence_samples = (silence_len * SAMPLE_RATE) / FRAMES_PER_BUFFER
                 silence_counter = 0
@@ -216,7 +222,7 @@ module Aurora
             terminate_stream(stream)
         end
 
-        private_class_method def self.init_stream(stream)
+        private_class_method def self.init_input_stream(stream)
             handle_error(PA.Pa_Initialize, stream)
             handle_error(PA.Pa_OpenStream(stream.ref, get_input_params, nil, SAMPLE_RATE, FRAMES_PER_BUFFER, PA::PaClipOff, nil, nil), stream)
             handle_error(PA.Pa_StartStream(stream), stream)
