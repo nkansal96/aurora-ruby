@@ -4,11 +4,24 @@ Aurora is the enterprise end-to-end speech solution. This Ruby SDK will allow yo
 
 The SDK is currently in a pre-alpha release phase. Bugs and limited functionality should be expected.
 
+## External Dependencies
+- PortAudio (C/C++ API)
+- Excon (Ruby gem)
+
 ## Installation
 **The Recommended Ruby version is 2.5.0+**
 
-To build and install the gem:
+To install gem dependencies:
+```
+$ bundle install
+```
 
+To install PortAudio (or build and install from source):
+```
+$ brew install portaudio
+```
+
+To build and install the gem:
 ```
 $ sudo rake install
 ```
@@ -82,5 +95,21 @@ while true
     i = Aurora::Text.new(user_text).to_interpret
     puts i.intent
     puts i.entities
+end
+```
+
+#### Record and Playback
+```ruby
+audio = Aurora.listen(5)
+audio.play
+```
+
+#### Continuous Function Usage
+The continuous listening functions return an Enumerator, which can be iterated over and processed piece by piece.
+```ruby
+require 'aurora-sdk'
+
+Aurora.continuously_listen(5).each do |audio|
+    # Do something with each audio segment
 end
 ```

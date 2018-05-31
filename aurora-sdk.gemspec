@@ -6,7 +6,7 @@ Gem::Specification.new do |s|
     s.description = 'The Aurora SDK for Ruby. Provides high-level interfaces for the Aurora API.'
     s.authors     = ['Daniel Lee', 'Eric Liu', 'Ritam Sarmah', 'Steven Xu', 'Ying Bin Wu']
     s.email       = 'contact@auroraapi.com'
-    s.files       = Dir['Rakefile', '{bin,lib,test}/**/*', 'README*']
+    s.files       = Dir['Rakefile', 'Gemfile', '{bin,lib,test}/**/*', 'README*']
     s.homepage    = 'https://auroraapi.com/'
     s.license     = 'MIT'
 end
