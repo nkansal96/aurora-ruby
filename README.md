@@ -91,6 +91,7 @@ file = File.open("test.wav", "rb")
 audio_file = Aurora::AudioFile.new(file.read)
 text_object = Aurora::Speech(audio_file).to_text
 puts text_object.text
+file.close
 ```
 
 #### Convert a previous Text API call to Speech
