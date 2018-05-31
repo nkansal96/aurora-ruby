@@ -6,6 +6,7 @@ module Aurora
     API_ERROR_MSG = "An error occurred with the API request."
     PORTAUDIO_MSG = "An error occurred with PortAudio."
     INVALID_AUDIO_MSG = "The audio object was not of expected type AudioFile."
+    ARG_MSG = "The arguments passed to the function were invalid"
 
     class InvalidConfigError < StandardError
         def initialize(msg=INVALID_CONFIG_MSG)
@@ -35,6 +36,12 @@ module Aurora
         def initialize(msg=PORTAUDIO_MSG)
             msg = "An error occurred with PortAudio: #{msg}"
             super(msg)
+        end
+    end
+
+    class ArgError < StandardError
+        def initialize(msg=ARG_MSG)
+            super
         end
     end
 

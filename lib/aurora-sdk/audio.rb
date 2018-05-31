@@ -121,7 +121,7 @@ module Aurora
 
         def self.record(seconds, silence_len)
             if seconds <= 0 and silence_len <= 0
-                # TODO: create exception for this situation
+                raise ArgError.new("The arguments for seconds and silence_len must be at least 0")
                 return nil
             end
 
