@@ -61,7 +61,7 @@ module Portaudio
     'PaHostApiIndex hostApi',
     'int maxInputChannels',
     'int maxOutputChannels',
-    'PaTime defaultLowInputLatencys',
+    'PaTime defaultLowInputLatency',
     'PaTime defaultLowOutputLatency',
     'PaTime defaultHighInputLatency',
     'PaTime defaultHighOutputLatency',
