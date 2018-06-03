@@ -92,9 +92,7 @@ module Aurora
             end
 
             # Add padding
-            sample_size = wav.bits_per_sample / 8
-            pad = padding * wav.sample_rate * sample_size
-            create_wav((values[front-pad..back+pad]).pack('s*'))
+            pad(create_wav((values[front..back]).pack('s*')), padding)
         end
 
         def self.pad_left(data, seconds)

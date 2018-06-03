@@ -2,12 +2,12 @@ require 'test/unit'
 require 'aurora-sdk'
 require_relative '../test_helpers'
 
-class TextTest < Test::Unit::TestCase
+class ApiTest < Test::Unit::TestCase
     include TestHelpers
 
     # get_stt tests
     def test_get_stt
-        speech_file = File.open("test/testfiles/stt_test.wav", "rb")
+        speech_file = File.open("test/testfiles/test_audio_base.wav", "rb")
 
         test_stt = Aurora::Api.get_stt(Aurora::AudioFile.new(speech_file.read))
         assert_equal('Check 123', test_stt.text)
@@ -16,7 +16,7 @@ class TextTest < Test::Unit::TestCase
     # get_tts tests
     def test_get_tts
         test_text = "Check one two three"
-        speech_file = File.open("test/testfiles/stt_test.wav", "rb")
+        speech_file = File.open("test/testfiles/test_audio_base.wav", "rb")
         expected_speech = Aurora::AudioFile.new(speech_file.read)
 
         test_tts = Aurora::Api.get_tts(test_text)
