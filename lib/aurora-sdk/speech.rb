@@ -12,7 +12,7 @@ module Aurora
             end
             @audio = audio
         end
-        
+
         # Transcribes speech to text
         #
         # @return [Aurora::Text]
@@ -34,7 +34,7 @@ module Aurora
     #                       continue to listen until the specified amount of
     #                       silence. A value greater than 0 will override any
     #                       value set to 'silence_len'.
-    # @param silence_len [Float] how long of silence (in seconds) will be
+    # @param silence_len [Float] how long silence (in seconds) will be
     #                            allowed before automatically stopping. This
     #                            value is only taken into consideration if
     #                            'length' is 0.
@@ -51,7 +51,7 @@ module Aurora
     #                       continue to listen until the specified amount of
     #                       silence. A value greater than 0 will override any
     #                       value set to 'silence_len'.
-    # @param silence_len [Float] how long of silence (in seconds) will be
+    # @param silence_len [Float] how long silence (in seconds) will be
     #                            allowed before automatically stopping. This
     #                            value is only taken into consideration if
     #                            'length' is 0.
@@ -76,7 +76,7 @@ module Aurora
     #                       continue to listen until the specified amount of
     #                       silence. A value greater than 0 will override any
     #                       value set to 'silence_len'.
-    # @param silence_len [Float] how long of silence (in seconds) will be
+    # @param silence_len [Float] How long silence (in seconds) will be
     #                            allowed before automatically stopping. This
     #                            value is only taken into consideration if
     #                            'length' is 0.
@@ -94,7 +94,7 @@ module Aurora
     #                       continue to listen until the specified amount of
     #                       silence. A value greater than 0 will override any
     #                       value set to 'silence_len'.
-    # @param silence_len [Float] how long of silence (in seconds) will be
+    # @param silence_len [Float] How long silence (in seconds) will be
     #                            allowed before automatically stopping. This
     #                            value is only taken into consideration if
     #                            'length' is 0.
