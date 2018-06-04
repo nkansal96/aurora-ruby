@@ -2,6 +2,7 @@ require_relative '../portaudio'
 require_relative 'audio'
 
 module Aurora
+    # Interface to Aurora::Audio
     class AudioFile
         attr_reader :playing, :should_stop
 

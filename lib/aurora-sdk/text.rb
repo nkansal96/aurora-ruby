@@ -1,4 +1,5 @@
 module Aurora
+    # Interface to interpret and convert text to speech
     class Text
         attr_accessor :text
 

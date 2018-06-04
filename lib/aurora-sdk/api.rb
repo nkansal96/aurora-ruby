@@ -8,6 +8,7 @@ require_relative 'error'
 require_relative 'audio'
 
 module Aurora
+    # Top-level interface to the Aurora API
     class Api
         BASE_URL = 'https://api.auroraapi.com'
         TTS_URL = BASE_URL + '/v1/tts/'

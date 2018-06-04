@@ -1,4 +1,6 @@
 module Aurora
+    # Class that supports Authentication and Device Identification to the
+    # Aurora API
     class Config
         attr_accessor :app_id, :app_token, :device_id
 

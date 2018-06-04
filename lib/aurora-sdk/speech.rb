@@ -1,4 +1,5 @@
 module Aurora
+    # Interface to Aurora::AudioFile
     class Speech
         attr_accessor :audio
 

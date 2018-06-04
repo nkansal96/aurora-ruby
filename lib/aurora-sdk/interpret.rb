@@ -1,4 +1,5 @@
 module Aurora
+    # Interface to the interpret service
     class Interpret
         attr_accessor :text, :intent, :entities
 

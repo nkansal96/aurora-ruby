@@ -8,6 +8,7 @@ require_relative 'aurora-sdk/interpret'
 require_relative 'aurora-sdk/text'
 require_relative 'aurora-sdk/speech'
 
+# Namespace for the Aurora Ruby SDK
 module Aurora
     # Configuration holding credentials
     class << self

@@ -2,6 +2,7 @@ require_relative '../portaudio'
 require_relative 'audio_file'
 
 module Aurora
+    # Implementation of how the SDK handles audio
     class Audio
         PA = Portaudio
 
