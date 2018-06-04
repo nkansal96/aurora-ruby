@@ -56,3 +56,14 @@ class SpeechTest < Test::Unit::TestCase
         assert_equal("remind me to do laundry tomorrow", text_object.text.downcase)
     end
 end
+
+# tests to see we have proper behavior when there are no credentials
+class SpeechTestNoCreds < Test::Unit::TestCase
+    def test_to_text 
+        file = File.open("test/testfiles/test_normal_speech1.wav", "rb")
+
+        audio_object = Aurora::AudioFile.new(file.read)
+
+        assert_raise(Aurora::InvalidConfigError.new) {text_object = Aurora::Speech.new(audio_object).to_text}
+    end
+end

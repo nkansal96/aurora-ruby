@@ -35,3 +35,19 @@ class TextTest < Test::Unit::TestCase
         assert_equal(expected_interpret.entities['location'], interpret.entities['location'])
     end
 end
+
+# tests to see we have proper behavior when there are no credentials
+class TextTestNoCreds < Test::Unit::TestCase
+    def test_to_speech 
+        # text generated from random text generator
+        test_text = 'camera trunk'
+
+        assert_raise(Aurora::InvalidConfigError.new) {speech = Aurora::Text.new(test_text).to_speech}
+    end
+
+    def test_to_interpret
+        text = 'what is the weather in Los Angeles'
+
+        assert_raise(Aurora::InvalidConfigError.new) {interpret = Aurora::Text.new(text).to_interpret}
+    end
+end
