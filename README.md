@@ -48,7 +48,7 @@ To generate documentation:
 $ rake yard
 ```
 
-This documentation will located in the `/docs/app` directory.
+This documentation will located in the `docs/app` directory.
 
 ## Basic Usage
 
