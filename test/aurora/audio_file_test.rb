@@ -5,6 +5,42 @@ require_relative '../test_helpers'
 class AudioFileTest < Test::Unit::TestCase
     include TestHelpers
 
+    # tests creation of AudioFile object with no argument
+    def test_create_no_arg
+        assert_raise(ArgumentError) {audio_file = Aurora::AudioFile.new}
+    end
+
+    # test creation of AudioFile object based on wav file
+    def test_create_normal
+        file = File.open("test/testfiles/test_normal_speech1.wav", "rb")
+
+        audio_object = Aurora::AudioFile.new(file.read)
+
+        assert_equal(false, audio_object.playing)
+        assert_equal(false ,audio_object.should_stop)
+    end
+
+    def test_to_wav
+        file = File.open("test/testfiles/test_normal_speech1.wav", "rb")
+        content = file.read
+
+        audio_object = Aurora::AudioFile.new(content)
+
+        assert_equal(content, audio_object.to_wav)
+    end
+
+    # writes to a tempfile and checks if content is the same
+    def test_write_to_file
+        file = File.open("test/testfiles/test_normal_speech1.wav", "rb")
+        content = file.read
+
+        audio_object = Aurora::AudioFile.new(content)
+        audio_object.write_to_file("/tmp/test.wav")
+
+        created_file = File.open("/tmp/test.wav", "rb")
+        assert_equal(content, created_file.read)
+    end
+
     # test padding functions
     def test_pad
         exp_file = File.open("test/testfiles/test_audio_double_pad.wav", "rb")
