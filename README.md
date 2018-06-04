@@ -7,6 +7,7 @@ The SDK is currently in a pre-alpha release phase. Bugs and limited functionalit
 ## External Dependencies
 - PortAudio (C/C++ API)
 - Excon (Ruby gem)
+- YARD (Ruby gem for documentation)
 
 ## Installation
 **The Recommended Ruby version is 2.5.0+**
@@ -77,7 +78,7 @@ require 'aurora-sdk'
 Aurora.config = Aurora::Config.new(APP_ID, APP_TOKEN, DEVICE_ID)
 
 # Query the TTS service
-speech  = Aurora::Text("Hello world").to_speech
+speech  = Aurora::Text.new("Hello world").to_speech
 
 # Play the resulting audio
 speech.audio.play
@@ -99,7 +100,7 @@ Aurora.config = Aurora::Config.new(APP_ID, APP_TOKEN, DEVICE_ID)
 # Open an existing WAV file (16-bit, mono, 16kHz WAV PCM)
 file = File.open("test.wav", "rb")
 audio_file = Aurora::AudioFile.new(file.read)
-text_object = Aurora::Speech(audio_file).to_text
+text_object = Aurora::Speech.new(audio_file).to_text
 puts text_object.text
 file.close
 ```
@@ -113,7 +114,7 @@ require 'aurora-sdk'
 Aurora.config = Aurora::Config.new(APP_ID, APP_TOKEN, DEVICE_ID)
 
 # Call the TTS API to convert "Hello world" to speech
-speech = Aurora::Text("Hello world").to_speech
+speech = Aurora::Text.new("Hello world").to_speech
 
 # Previous API call returned a Speech object, so we can just call
 # the to_text method to get a prediction

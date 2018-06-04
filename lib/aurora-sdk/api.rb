@@ -13,7 +13,15 @@ module Aurora
         TTS_URL = BASE_URL + '/v1/tts/'
         STT_URL = BASE_URL + '/v1/stt/'
         INTERPRET_URL = BASE_URL + '/v1/interpret/'
-
+        
+        # get_stt queries the API with the provided raw WAV audio stream
+        # and returns a transcript of the speech
+        #
+        # @param audio Aurora::AudioFile object
+        # @param stream TrueClass or FalseClass object
+        # @param stream_source @TODO
+        #
+        # @return Aurora::Text object
         def self.get_stt(audio, stream = false, stream_source = nil)
             if !Aurora.config_valid?
                 raise InvalidConfigError
@@ -53,11 +61,20 @@ module Aurora
 
             handle_error(response, stream)
 
-            # Return Text object
             json = JSON.parse(stream ? response[:body] : response.body)
             Text.new(json['transcript'])
         end
 
+        # get_tts queries the API with the provided text and returns a speech
+        # object that can access the synthesized speech audio file
+        #
+        # @example Play the synthesized speech
+        #   get_tts(Aurora::Text.new("Hello World")).audio.play
+        #
+        # @param text Aurora::Text object
+        #
+        # @return Aurora::Speech object
+        #
         def self.get_tts(text)
             if !Aurora.config_valid?
                 raise InvalidConfigError
@@ -71,12 +88,17 @@ module Aurora
 
                 handle_error(response)
 
-                # Return Speech object
                 audio_file = AudioFile.new(response.body)
                 Speech.new(audio_file)
             end
         end
 
+        # get_interpret queries the API with the provided text and returns
+        # the interpreted response.
+        #
+        # @param text Aurora::Text object
+        #
+        # @return Aurora::Interpret object
         def self.get_interpret(text)
             if !Aurora.config_valid?
                 raise InvalidConfigError
@@ -90,7 +112,6 @@ module Aurora
 
                 handle_error(response)
 
-                # Return Interpret object
                 json = JSON.parse(response.body)
                 Interpret.new(json['text'], json['intent'], json['entities'])
             end
