@@ -14,13 +14,13 @@ module Aurora
         TTS_URL = BASE_URL + '/v1/tts/'
         STT_URL = BASE_URL + '/v1/stt/'
         INTERPRET_URL = BASE_URL + '/v1/interpret/'
-        
-        # get_stt queries the API with the provided raw WAV audio stream
+
+        # Queries the API with the provided raw WAV audio stream
         # and returns a transcript of the speech
         #
         # @param audio [Aurora::AudioFile]
         # @param stream [Boolean]
-        # @param stream_source TODO (not sure what class this is)
+        # @param stream_source [Enumerator]
         #
         # @return [Aurora::Text]
         def self.get_stt(audio, stream = false, stream_source = nil)
@@ -66,13 +66,13 @@ module Aurora
             Text.new(json['transcript'])
         end
 
-        # get_tts queries the API with the provided text and returns a speech
+        # Queries the API with the provided text and returns a speech
         # object that can access the synthesized speech audio file
         #
         # @example Play the synthesized speech
-        #   get_tts(Aurora::Text.new("Hello World")).audio.play
+        #   get_tts("Hello World").audio.play
         #
-        # @param text [Aurora::Text]
+        # @param text [String]
         #
         # @return [Aurora::Speech]
         #
@@ -94,8 +94,7 @@ module Aurora
             end
         end
 
-        # get_interpret queries the API with the provided text and returns
-        # the interpreted response.
+        # Queries the API with the provided text and returns the interpreted response.
         #
         # @param text [Aurora::Text]
         #

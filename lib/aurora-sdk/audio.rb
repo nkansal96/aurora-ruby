@@ -185,7 +185,7 @@ module Aurora
 
         # Returns appropriate recording enumerator based on parameters given
         #
-        # @param length [Float] The time (in seconds) to listen for.
+        # @param seconds [Float] The time (in seconds) to listen for.
         #                       A value of 0 means that the recording framework will
         #                       continue to listen until the specified amount of
         #                       silence. A value greater than 0 will override any
@@ -234,7 +234,7 @@ module Aurora
         #
         # @param silence_len [Float] How long silence (in seconds) will be
         #
-        # @param [Enumerator]
+        # @return [Enumerator]
         def self.record_until_silence(silence_len)
             Enumerator.new {|y|
                 stream = Fiddle::Pointer.new 0

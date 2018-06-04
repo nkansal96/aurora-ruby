@@ -124,7 +124,7 @@ module Portaudio
     PaBadBufferPtr                          = -9972
   end
 
-  # Namespace of PulseAudio API Types
+  # Namespace of PortAudio API Types
   module PaHostApiTypeId
     PaInDevelopment   = 0
     PaDirectSound     = 1
@@ -142,7 +142,7 @@ module Portaudio
     PaAudioScienceHPI = 14
   end
 
-  # Namespace of PulseAudio Callback Constants
+  # Namespace of PortAudio Callback Constants
   module PaStreamCallbackResult
     PaContinue = 0
     PaComplete = 1
