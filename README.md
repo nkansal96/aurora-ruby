@@ -40,6 +40,16 @@ The full test suite can be run using `rake`. To specify an individual test file,
 $ rake TEST=./test/aurora/interpret_test.rb
 ```
 
+## Documentation
+The Aurora Ruby SDK uses YARD to generate documentation.
+To generate documentation:
+
+```
+$ rake yard
+```
+
+This documentation will located in the `/docs/app` directory.
+
 ## Basic Usage
 
 First, make sure you have an account with [Aurora](http://dashboard.auroraapi.com/) and have created an Application.
