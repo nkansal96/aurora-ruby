@@ -17,11 +17,11 @@ module Aurora
         # get_stt queries the API with the provided raw WAV audio stream
         # and returns a transcript of the speech
         #
-        # @param audio Aurora::AudioFile object
-        # @param stream TrueClass or FalseClass object
-        # @param stream_source @TODO
+        # @param audio [Aurora::AudioFile]
+        # @param stream [Boolean]
+        # @param stream_source TODO (not sure what class this is)
         #
-        # @return Aurora::Text object
+        # @return [Aurora::Text]
         def self.get_stt(audio, stream = false, stream_source = nil)
             if !Aurora.config_valid?
                 raise InvalidConfigError
@@ -71,9 +71,9 @@ module Aurora
         # @example Play the synthesized speech
         #   get_tts(Aurora::Text.new("Hello World")).audio.play
         #
-        # @param text Aurora::Text object
+        # @param text [Aurora::Text]
         #
-        # @return Aurora::Speech object
+        # @return [Aurora::Speech]
         #
         def self.get_tts(text)
             if !Aurora.config_valid?
@@ -96,9 +96,9 @@ module Aurora
         # get_interpret queries the API with the provided text and returns
         # the interpreted response.
         #
-        # @param text Aurora::Text object
+        # @param text [Aurora::Text]
         #
-        # @return Aurora::Interpret object
+        # @return [Aurora::Interpret]
         def self.get_interpret(text)
             if !Aurora.config_valid?
                 raise InvalidConfigError
