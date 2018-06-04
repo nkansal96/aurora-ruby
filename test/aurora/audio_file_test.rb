@@ -43,8 +43,20 @@ class AudioFileTest < Test::Unit::TestCase
     end
 
     # test trimming functions
-    def test_double_trim
+    def test_base_trim
         exp_file = File.open("test/testfiles/test_audio_trimmed.wav", "rb")
+        expected_audio = Aurora::AudioFile.new(exp_file.read)
+        test_file = File.open("test/testfiles/test_audio_base.wav", "rb")
+        test_audio_bang = Aurora::AudioFile.new(test_file.read)
+        test_audio = test_audio_bang.trim_silence
+        test_audio_bang.trim_silence!
+        
+        assert_equal(expected_audio.to_wav, test_audio.to_wav)
+        assert_equal(expected_audio.to_wav, test_audio_bang.to_wav)
+    end
+
+    def test_double_trim
+        exp_file = File.open("test/testfiles/test_audio_trimmed_dp.wav", "rb")
         expected_audio = Aurora::AudioFile.new(exp_file.read)
         test_file = File.open("test/testfiles/test_audio_double_pad.wav", "rb")
         test_audio_bang = Aurora::AudioFile.new(test_file.read)
@@ -56,7 +68,7 @@ class AudioFileTest < Test::Unit::TestCase
     end
 
     def test_left_trim
-        exp_file = File.open("test/testfiles/test_audio_trimmed.wav", "rb")
+        exp_file = File.open("test/testfiles/test_audio_trimmed_lp.wav", "rb")
         expected_audio = Aurora::AudioFile.new(exp_file.read)
         test_file = File.open("test/testfiles/test_audio_left_pad.wav", "rb")
         test_audio_bang = Aurora::AudioFile.new(test_file.read)
@@ -68,7 +80,7 @@ class AudioFileTest < Test::Unit::TestCase
     end
   
     def test_right_trim
-        exp_file = File.open("test/testfiles/test_audio_trimmed.wav", "rb")
+        exp_file = File.open("test/testfiles/test_audio_trimmed_rp.wav", "rb")
         expected_audio = Aurora::AudioFile.new(exp_file.read)
         test_file = File.open("test/testfiles/test_audio_right_pad.wav", "rb")
         test_audio_bang = Aurora::AudioFile.new(test_file.read)
