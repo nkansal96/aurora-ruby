@@ -15,6 +15,8 @@
 /doc/
 /rdoc/
 
+/build/
+
 Gemfile.lock
 .ruby-version
 .ruby-gemset

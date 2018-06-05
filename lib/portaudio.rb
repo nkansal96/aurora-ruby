@@ -1,14 +1,11 @@
 require 'fiddle'
 require 'fiddle/import'
+require_relative 'portaudio/find_lib'
 
 module Portaudio
   extend Fiddle::Importer
 
-  # Load the dylib for PortAudio
-  # TODO: fix for all platforms
-  pa_path = '/usr/local/lib/libportaudio.dylib' if File.exist? '/usr/local/lib/libportaudio.dylib'
-  pa_path = '/usr/lib/libportaudio.dylib' if File.exist? '/usr/lib/libportaudio.dylib'
-  dlload pa_path
+  dlload find_lib
 
   # Custom typedefs
   typealias 'PaError', 'int'
