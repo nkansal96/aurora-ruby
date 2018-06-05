@@ -4,6 +4,7 @@ require_relative '../aurora-sdk/error'
 def find_lib
     lib_path = nil
 
+    FileUtils.remove_dir('build', true)
     Dir.mkdir('build')
 
     Dir.chdir('build') do
