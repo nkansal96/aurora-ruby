@@ -1,11 +1,18 @@
 require 'fiddle'
 require 'fiddle/import'
-require_relative 'portaudio/find_lib'
+#require_relative 'portaudio/find_lib'
 
 module Portaudio
   extend Fiddle::Importer
 
-  dlload find_lib
+  if Gem::Platform.local.os == "mingw32" && Gem::Platform.local.cpu == "x64"
+    pa_path = File.absolute_path("lib/portaudio/libportaudio64bit.dll")
+  elsif Gem::Platform.local.os == "mingw32" && Gem::Platform.local.cpu == "x86"
+    pa_path = File.absolute_path("lib/portaudio/libportaudio32bit.dll")
+  else
+    pa_path = File.absolute_path("lib/portaudio/libportaudio.dylib")
+  end
+  dlload pa_path
 
   # Custom typedefs
   typealias 'PaError', 'int'
