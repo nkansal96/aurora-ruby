@@ -15,7 +15,7 @@ class SpeechTest < Test::Unit::TestCase
         arg = 42
 
         # wrong argument type error
-        assert_raise(Aurora::AudioTypeError.new(arg.class)) {audio_file = Aurora::Speech.new(arg)}
+        assert_raise(Aurora::Error::AudioTypeError.new(arg.class)) {audio_file = Aurora::Speech.new(arg)}
     end
 
     # test creation of a speech object based on normal audio object file
@@ -64,6 +64,6 @@ class SpeechTestNoCreds < Test::Unit::TestCase
 
         audio_object = Aurora::AudioFile.new(file.read)
 
-        assert_raise(Aurora::InvalidConfigError.new) {text_object = Aurora::Speech.new(audio_object).to_text}
+        assert_raise(Aurora::Error::InvalidConfigError.new) {text_object = Aurora::Speech.new(audio_object).to_text}
     end
 end

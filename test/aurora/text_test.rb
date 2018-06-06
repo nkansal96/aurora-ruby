@@ -42,12 +42,12 @@ class TextTestNoCreds < Test::Unit::TestCase
         # text generated from random text generator
         test_text = 'camera trunk'
 
-        assert_raise(Aurora::InvalidConfigError.new) {speech = Aurora::Text.new(test_text).to_speech}
+        assert_raise(Aurora::Error::InvalidConfigError.new) {speech = Aurora::Text.new(test_text).to_speech}
     end
 
     def test_to_interpret
         text = 'what is the weather in Los Angeles'
 
-        assert_raise(Aurora::InvalidConfigError.new) {interpret = Aurora::Text.new(text).to_interpret}
+        assert_raise(Aurora::Error::InvalidConfigError.new) {interpret = Aurora::Text.new(text).to_interpret}
     end
 end

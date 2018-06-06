@@ -8,7 +8,7 @@ module Aurora
         # @return a new instance of Aurora::Speech
         def initialize(audio)
             if !audio.is_a?(AudioFile)
-                raise AudioTypeError.new(audio.class)
+                raise Error::AudioTypeError.new(audio.class)
             end
             @audio = audio
         end
