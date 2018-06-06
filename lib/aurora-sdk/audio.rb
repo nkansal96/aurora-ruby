@@ -284,7 +284,7 @@ module Aurora
         # Plays audio given WAV file data
         private_class_method def self.play_audio(wav)
             if !valid_wav?(wav)
-                raise WAVFileError
+                raise Error::WAVFileError
             end
 
             stream = Fiddle::Pointer.new 0
@@ -320,13 +320,13 @@ module Aurora
             input_param.device = PA.Pa_GetDefaultInputDevice
             if input_param.device < 0
                 PA.Pa_Terminate
-                raise PortAudioError.new('Input device not found.')
+                raise Error::PortAudioError.new('Input device not found.')
             end
 
             input_info = PA::Pa_GetDeviceInfo(input_param.device)
             if input_info.null?
                 PA.Pa_Terminate
-                raise PortAudioError.new('Error getting device info')
+                raise Error::PortAudioError.new('Error getting device info')
             end
             input_info = PA::PaDeviceInfo.new(input_info)
 
@@ -345,13 +345,13 @@ module Aurora
             output_param.device = PA.Pa_GetDefaultOutputDevice
             if output_param.device < 0
                 PA.Pa_Terminate
-                raise PortAudioError.new('Output device not found.')
+                raise Error::PortAudioError.new('Output device not found.')
             end
 
             output_info = PA::Pa_GetDeviceInfo(output_param.device)
             if output_info.null?
                 PA.Pa_Terminate
-                raise PortAudioError.new('Error getting device info')
+                raise Error::PortAudioError.new('Error getting device info')
             end
             output_info = PA::PaDeviceInfo.new(output_info)
 
@@ -372,7 +372,7 @@ module Aurora
                     PA.Pa_CloseStream(stream)
                 end
                 PA.Pa_Terminate
-                raise PortAudioError.new(PA.Pa_GetErrorText(err))
+                raise Error::PortAudioError.new(PA.Pa_GetErrorText(err))
             end
         end
 
