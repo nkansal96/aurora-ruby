@@ -51,25 +51,76 @@ module Aurora
             end
         end
 
-        # Pads both sides of audio with specified amount of silence (in seconds)
-        def pad(seconds)
+        # Pads both sides of audio with specified amount of silence (in seconds) in place
+        #
+        # @param seconds [Float] the amount of silence to add (in seconds)
+        #
+        # @return [nil]
+        def pad!(seconds)
             @audio = Audio.pad(@audio, seconds)
+            nil
         end
 
-        # Pads the left side of the audio with the specified amount of silence (in seconds)
-        def pad_left(seconds)
+        # Pads the left side of the audio with the specified amount of silence (in seconds) in place
+        #
+        # @param seconds [Float] the amount of silence to add (in seconds)
+        #
+        # @return [nil]
+        def pad_left!(seconds)
             @audio = Audio.pad_left(@audio, seconds)
+            nil
         end
 
-        # Pads the right side of the audio with the specified amount of silence (in seconds)
-        def pad_right(seconds)
+        # Pads the right side of the audio with the specified amount of silence (in seconds) in place
+        #
+        # @param seconds [Float] the amount of silence to add (in seconds)
+        #
+        # @return [nil]
+        def pad_right!(seconds)
             @audio = Audio.pad_right(@audio, seconds)
+            nil
         end
 
-        # Trims extraneous silence at the ends of the audio
-        def trim_silence
+        # Trims extraneous silence at the ends of the audio in place
+        #
+        # @return [nil]
+        def trim_silence!
             @audio = Audio.trim_silence(0.03, 0.1, @audio)
+            nil
         end
 
+        # Returns AudioFile with side-padded audio
+        #
+        # @param seconds [Float] the amount of silence to add (in seconds)
+        #
+        # @return [Aurora::AudioFile]
+        def pad(seconds)
+            AudioFile.new(Audio.pad(@audio, seconds))
+        end
+
+        # Returns AudioFile with left-padded audio
+        #
+        # @param seconds [Float] the amount of silence to add (in seconds)
+        #
+        # @return [Aurora::AudioFile]
+        def pad_left(seconds)
+            AudioFile.new(Audio.pad_left(@audio, seconds))
+        end
+
+        # Returns AudioFile with right-padded audio
+        #
+        # @param seconds [Float] the amount of silence to add (in seconds)
+        #
+        # @return [Aurora::AudioFile]
+        def pad_right(seconds)
+            AudioFile.new(Audio.pad_right(@audio, seconds))
+        end
+
+        # return AudioFile with silence on ends trimmed
+        #
+        # @return [Aurora::AudioFile]
+        def trim_silence
+            AudioFile.new(Audio.trim_silence(0.03, 0.1, @audio))
+        end
     end
 end

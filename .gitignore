@@ -17,6 +17,8 @@
 .yardoc/*
 doc/app/*
 
+/build/
+
 Gemfile.lock
 .ruby-version
 .ruby-gemset

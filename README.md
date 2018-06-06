@@ -69,6 +69,14 @@ puts Aurora.config.app_token
 puts Aurora.config.device_id
 ```
 
+The SDK will by default utilize one of the pre-compiled PortAudio binaries included in the source. However, if you want to
+use a different binary (.dylib or .so), you can set an environment variable prior to requiring the SDK, like so:
+
+```ruby
+ENV['PA_PATH'] = '/path/to/libportaudio.dylib'
+require 'aurora-sdk'
+```
+
 ### Text to Speech (TTS)
 ```ruby
 # Import the package
