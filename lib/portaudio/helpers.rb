@@ -9,6 +9,8 @@ module Portaudio
             return File.absolute_path("lib/portaudio/binaries/libportaudio64bit.dll")
         elsif Gem::Platform.local.os == "mingw32" && Gem::Platform.local.cpu == "x86"
             return File.absolute_path("lib/portaudio/binaries/libportaudio32bit.dll")
+        elsif Gem::Platform.local.os == "linux"
+            return File.absolute_path("lib/portaudio/binaries/libportaudio.so")
         else
             return File.absolute_path("lib/portaudio/binaries/libportaudio.dylib")
         end
