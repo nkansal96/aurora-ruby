@@ -116,7 +116,7 @@ module Aurora
             AudioFile.new(Audio.pad_right(@audio, seconds))
         end
 
-        # return AudioFile with silence on ends trimmed
+        # Return AudioFile with silence on ends trimmed
         #
         # @return [Aurora::AudioFile]
         def trim_silence
