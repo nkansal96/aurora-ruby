@@ -7,7 +7,9 @@ The SDK is currently in a pre-alpha release phase. Bugs and limited functionalit
 ## External Dependencies
 - PortAudio (C/C++ API)
 - Excon (Ruby gem)
-- YARD (Ruby gem for documentation)
+- YARD (Ruby gem for documentation)  
+
+**Note:** We compiled some PortAudio bindings for Linux, MacOS, and Windows already. We use PortAudio V19 API version 2.0 for our Linux build and PortAudio v19.6.0 in our MacOS and Windows build. If users want a different version of PortAudio, find your operating system and look up the installation guide [here](http://portaudio.com/docs/v19-doxydocs/pages.html).
 
 ## Installation
 **The Recommended Ruby version is 2.5.0+**
