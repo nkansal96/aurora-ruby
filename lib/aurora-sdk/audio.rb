@@ -94,7 +94,9 @@ module Aurora
             # Add padding
             sample_size = wav.bits_per_sample / 8
             pad = padding * wav.sample_rate * sample_size
-            create_wav((values[front-pad..back+pad]).pack('s*'))
+            front_pad = [front-pad, 0].max
+            back_pad = [back+pad, values.size-1].min
+            create_wav((values[front_pad..back_pad]).pack('s*'))
         end
 
         def self.pad_left(data, seconds)
@@ -121,7 +123,7 @@ module Aurora
 
         def self.record(seconds, silence_len)
             if seconds <= 0 and silence_len <= 0
-                # TODO: create exception for this situation
+                raise ArgError.new("The arguments for seconds and silence_len must be at least 0")
                 return nil
             end
 
