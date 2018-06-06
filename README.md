@@ -43,6 +43,8 @@ The full test suite can be run using `rake`. To specify an individual test file,
 $ rake TEST=./test/aurora/interpret_test.rb
 ```
 
+**Note:** In order to run certain tests without them failing, add your Aurora APP ID and APP TOKEN in the test/test_helpers.rb file. 
+
 ## Documentation
 The Aurora Ruby SDK uses YARD to generate documentation.
 To generate documentation:
