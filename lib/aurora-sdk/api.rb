@@ -8,12 +8,21 @@ require_relative 'error'
 require_relative 'audio'
 
 module Aurora
+    # Top-level interface to the Aurora API
     class Api
         BASE_URL = 'https://api.auroraapi.com'
         TTS_URL = BASE_URL + '/v1/tts/'
         STT_URL = BASE_URL + '/v1/stt/'
         INTERPRET_URL = BASE_URL + '/v1/interpret/'
 
+        # Queries the API with the provided raw WAV audio stream
+        # and returns a transcript of the speech
+        #
+        # @param audio [Aurora::AudioFile]
+        # @param stream [Boolean]
+        # @param stream_source [Enumerator]
+        #
+        # @return [Aurora::Text]
         def self.get_stt(audio, stream = false, stream_source = nil)
             if !Aurora.config_valid?
                 raise InvalidConfigError
@@ -53,11 +62,20 @@ module Aurora
 
             handle_error(response, stream)
 
-            # Return Text object
             json = JSON.parse(stream ? response[:body] : response.body)
             Text.new(json['transcript'])
         end
 
+        # Queries the API with the provided text and returns a speech
+        # object that can access the synthesized speech audio file
+        #
+        # @example Play the synthesized speech
+        #   get_tts("Hello World").audio.play
+        #
+        # @param text [String]
+        #
+        # @return [Aurora::Speech]
+        #
         def self.get_tts(text)
             if !Aurora.config_valid?
                 raise InvalidConfigError
@@ -71,12 +89,16 @@ module Aurora
 
                 handle_error(response)
 
-                # Return Speech object
                 audio_file = AudioFile.new(response.body)
                 Speech.new(audio_file)
             end
         end
 
+        # Queries the API with the provided text and returns the interpreted response.
+        #
+        # @param text [Aurora::Text]
+        #
+        # @return [Aurora::Interpret]
         def self.get_interpret(text)
             if !Aurora.config_valid?
                 raise InvalidConfigError
@@ -90,7 +112,6 @@ module Aurora
 
                 handle_error(response)
 
-                # Return Interpret object
                 json = JSON.parse(response.body)
                 Interpret.new(json['text'], json['intent'], json['entities'])
             end

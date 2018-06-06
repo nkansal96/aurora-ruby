@@ -1,8 +1,15 @@
 require 'rake/testtask'
+require 'yard'
 
 desc 'Run all tests.'
 Rake::TestTask.new do |t|
-  t.pattern = './test/**/*_test.rb'
+    t.pattern = './test/**/*_test.rb'
+end
+
+desc 'Generate YARD documentation'
+YARD::Rake::YardocTask.new do |t|
+    t.files = ['lib/*.rb', 'lib/aurora-sdk/*.rb']
+    t.options = ['--output-dir', 'doc/app/']
 end
 
 desc 'Delete gem build files.'

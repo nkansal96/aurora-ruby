@@ -2,6 +2,7 @@ require 'fiddle'
 require 'fiddle/import'
 require_relative 'portaudio/helpers'
 
+# Namespace for PortAudio
 module Portaudio
   extend Fiddle::Importer
 
@@ -121,6 +122,7 @@ module Portaudio
     PaBadBufferPtr                          = -9972
   end
 
+  # Namespace of PortAudio API Types
   module PaHostApiTypeId
     PaInDevelopment   = 0
     PaDirectSound     = 1
@@ -138,6 +140,7 @@ module Portaudio
     PaAudioScienceHPI = 14
   end
 
+  # Namespace of PortAudio Callback Constants
   module PaStreamCallbackResult
     PaContinue = 0
     PaComplete = 1
