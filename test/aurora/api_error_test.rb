@@ -11,16 +11,16 @@ class ApiErrorTest < Test::Unit::TestCase
 
     def test_nil_config
         Aurora.config = nil
-        assert_raise( Aurora::InvalidConfigError ) { Aurora::Api.get_interpret('what is the weather in los angeles?') }
+        assert_raise( Aurora::Error::InvalidConfigError ) { Aurora::Api.get_interpret('what is the weather in los angeles?') }
     end
 
     def test_nil_id
         Aurora.config.app_id = nil
-        assert_raise( Aurora::APIError ) { Aurora::Api.get_interpret('what is the weather in los angeles?') }
+        assert_raise( Aurora::Error::APIError ) { Aurora::Api.get_interpret('what is the weather in los angeles?') }
     end
 
     def test_nil_token
         Aurora.config.app_token = nil
-        assert_raise( Aurora::APIError ) { Aurora::Api.get_interpret('what is the weather in los angeles?') }
+        assert_raise( Aurora::Error::APIError ) { Aurora::Api.get_interpret('what is the weather in los angeles?') }
     end
 end

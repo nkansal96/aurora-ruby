@@ -25,7 +25,7 @@ module Aurora
         # @return [Aurora::Text]
         def self.get_stt(audio, stream = false, stream_source = nil)
             if !Aurora.config_valid?
-                raise InvalidConfigError
+                raise Error::InvalidConfigError
             end
 
             if stream
@@ -48,7 +48,7 @@ module Aurora
                 response = (Excon.post(STT_URL, :request_block => chunker, :headers => create_header_hash)).data
             else
                 if !audio.is_a?(AudioFile)
-                    raise AudioTypeError.new(audio.class)
+                    raise Error::AudioTypeError.new(audio.class)
                 end
 
                 uri = URI(STT_URL)
@@ -78,7 +78,7 @@ module Aurora
         #
         def self.get_tts(text)
             if !Aurora.config_valid?
-                raise InvalidConfigError
+                raise Error::InvalidConfigError
             else
                 uri = URI(TTS_URL)
                 uri.query = URI.encode_www_form({ text: text })
@@ -101,7 +101,7 @@ module Aurora
         # @return [Aurora::Interpret]
         def self.get_interpret(text)
             if !Aurora.config_valid?
-                raise InvalidConfigError
+                raise Error::InvalidConfigError
             else
                 uri = URI(INTERPRET_URL)
                 uri.query = URI.encode_www_form({ text: text })
@@ -146,7 +146,7 @@ module Aurora
                 if response[:status] == 200
                     return true
                 else
-                    raise APIError.new(response[:status_line])
+                    raise Error::APIError.new(response[:status_line])
                 end
             end
 
@@ -159,12 +159,12 @@ module Aurora
                     code = json['code']
                     msg = json['message']
                     if code != nil
-                        raise APIError.new("#{json['code']}: #{json['message']}")
+                        raise Error::APIError.new("#{json['code']}: #{json['message']}")
                     else
-                        raise APIError.new("#{json['message']}")
+                        raise Error::APIError.new("#{json['message']}")
                     end
                 end
-                raise APIError
+                raise Error::APIError
             end
         end
     end

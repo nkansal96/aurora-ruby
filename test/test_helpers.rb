@@ -1,6 +1,6 @@
 module TestHelpers
-    APP_ID = '40d32fb42fc846ac438425593bfdc33d'
-    APP_TOKEN = 'O31MY3tPoEMHGcjGEQqnNY1HanDrkkAu'
+    APP_ID = '' # Add your Aurora APP ID here
+    APP_TOKEN = '' # Add your Aurora APP TOKEN here
 
     def setup
         Aurora.config = Aurora::Config.new(APP_ID, APP_TOKEN)

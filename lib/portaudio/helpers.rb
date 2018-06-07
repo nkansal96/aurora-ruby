@@ -9,6 +9,8 @@ module Portaudio
             return File.join(File.dirname(__FILE__), '/binaries/libportaudio64bit.dll')
         elsif Gem::Platform.local.os == "mingw32" && Gem::Platform.local.cpu == "x86"
             return File.join(File.dirname(__FILE__), '/binaries/libportaudio32bit.dll')
+        elsif Gem::Platform.local.os == "linux"
+            return File.join(File.dirname(__FILE__), '/binaries/libportaudio.so')
         else
             return File.join(File.dirname(__FILE__), '/binaries/libportaudio.dylib')
         end
