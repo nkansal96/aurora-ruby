@@ -1,0 +1,31 @@
+#!/usr/bin/env ruby
+
+require 'aurora-sdk'
+
+if ARGV.length == 3
+    filename  = ARGV[0]
+    app_id    = ARGV[1]
+    app_token = ARGV[2]
+
+    if !File.exist?(filename)
+        puts "File \'#{filename}\' does not exist."
+        exit
+    end
+
+    if !filename.downcase.end_with?('.wav')
+        puts "Aurora requires WAV files."
+        exit
+    end
+
+    begin
+        Aurora.config = Aurora::Config.new(app_id, app_token)
+        res = Aurora::Api.get_stt(Aurora::AudioFile.new(File.read(filename)))
+    rescue StandardError => e
+        puts e.message
+        exit
+    end
+
+    puts "Text: #{res.text}"
+else
+    puts 'USAGE: /path/to/script/aurora-stt [filename] [app_id] [app_token]'
+end
