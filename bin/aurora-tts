@@ -22,7 +22,7 @@ if ARGV.length == 4
 
     begin
         open(filename, 'wb') do |file|
-            file.write(res)
+            file.write(res.audio.to_wav)
         end
     rescue
         puts "Error writing file \'#{filename}\'"
