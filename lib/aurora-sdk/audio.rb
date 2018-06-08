@@ -216,11 +216,13 @@ module Aurora
         def self.record_for_time(seconds)
             Enumerator.new {|y|
                 stream = Fiddle::Pointer.new 0
-                sample_block = '0' * BYTES_PER_BLOCK  # Buffer string of size num_bytes
+                sample_block = '0' * BYTES_PER_BLOCK  # Buffer string of size BYTES_PER_BLOCK
 
                 init_input_stream(stream)
 
                 num_samples = (seconds * SAMPLE_RATE) / FRAMES_PER_BUFFER
+
+                y.yield wait_on_silence(stream)
 
                 # Record audio
                 (0..num_samples-1).each do |i|
@@ -240,12 +242,14 @@ module Aurora
         def self.record_until_silence(silence_len)
             Enumerator.new {|y|
                 stream = Fiddle::Pointer.new 0
-                sample_block = '0' * BYTES_PER_BLOCK  # Buffer string of size num_bytes
+                sample_block = '0' * BYTES_PER_BLOCK  # Buffer string of size BYTES_PER_BLOCK
 
                 init_input_stream(stream)
 
                 num_silence_samples = (silence_len * SAMPLE_RATE) / FRAMES_PER_BUFFER
                 silence_counter = 0
+
+                y.yield wait_on_silence(stream)
 
                 # Record audio
                 while true
@@ -299,6 +303,23 @@ module Aurora
             end
 
             terminate_stream(stream)
+        end
+
+        private_class_method def self.wait_on_silence(stream)
+            sample_block = '0' * BYTES_PER_BLOCK  # Buffer string of size BYTES_PER_BLOCK
+            padding_size = (0.1 * SAMPLE_RATE) / FRAMES_PER_BUFFER # 0.1 is an arbitrary padding number (in seconds)
+            buffer = ''
+
+            loop do
+                handle_error(PA.Pa_ReadStream(stream, sample_block, FRAMES_PER_BUFFER), stream)
+                buffer << sample_block
+                if buffer.size > 8 * padding_size   # 8 is determined from trial-and-error
+                    buffer = buffer[padding_size..buffer.size]
+                end
+                break if !silent? [sample_block]
+            end
+
+            buffer
         end
 
         private_class_method def self.init_input_stream(stream)
